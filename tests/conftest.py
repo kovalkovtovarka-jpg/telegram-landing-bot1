@@ -3,7 +3,7 @@ Pytest configuration and shared fixtures
 """
 import pytest
 import os
-from unittest.mock import Mock, MagicMock, AsyncMock
+from unittest.mock import Mock, MagicMock, AsyncMock, patch
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from telegram import Update, Message, User, Chat, CallbackQuery
@@ -44,13 +44,23 @@ def test_db_session():
         Base.metadata.drop_all(bind=engine)
 
 
+@pytest.fixture(autouse=True)
+def disable_cleanup_task():
+    """
+    Отключает фоновую задачу очистки AI-агентов во всех тестах.
+    Убирает предупреждение: "Task was destroyed but it is pending!" (cleanup_task).
+    """
+    with patch.object(LandingBot, '_start_ai_agents_cleanup_task', return_value=None):
+        yield
+
+
 @pytest.fixture
 def mock_application():
     """
     Патчит telegram.Application.builder() чтобы не вызывать реальную валидацию токена.
     Использовать в фикстурах, создающих LandingBot.
     """
-    from unittest.mock import patch, MagicMock
+    from unittest.mock import MagicMock
     mock_builder = MagicMock()
     mock_app = MagicMock()
     mock_app.bot = MagicMock()
