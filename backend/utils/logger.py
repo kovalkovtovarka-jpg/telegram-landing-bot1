@@ -2,12 +2,35 @@
 Улучшенная система логирования с контекстом
 """
 import logging
+import re
 import sys
 import os
 from logging.handlers import RotatingFileHandler
 from typing import Optional, Dict, Any
 from contextvars import ContextVar
 from datetime import datetime
+
+# Паттерн для маскировки токена бота в URL (api.telegram.org/bot123:secret/...)
+_BOT_TOKEN_PATTERN = re.compile(r'(bot\d+[:%][A-Za-z0-9_-]+)', re.IGNORECASE)
+
+
+def _redact_string(s: str) -> str:
+    return _BOT_TOKEN_PATTERN.sub(r'bot***', s)
+
+
+class SecretRedactionFilter(logging.Filter):
+    """Убирает токен бота из текста логов (msg и args)."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if isinstance(record.msg, str):
+            record.msg = _redact_string(record.msg)
+        if record.args:
+            if isinstance(record.args, dict):
+                record.args = {k: _redact_string(v) if isinstance(v, str) else v for k, v in record.args.items()}
+            else:
+                record.args = tuple(_redact_string(a) if isinstance(a, str) else a for a in record.args)
+        return True
+
 
 # Контекстные переменные для хранения информации о запросе
 request_id_var: ContextVar[Optional[str]] = ContextVar('request_id', default=None)
@@ -74,6 +97,7 @@ def setup_logging(
     formatter = ContextualFormatter(log_format, datefmt='%Y-%m-%d %H:%M:%S')
     
     # Обработчик для файла с ротацией
+    redaction_filter = SecretRedactionFilter()
     file_handler = RotatingFileHandler(
         log_file,
         maxBytes=max_bytes,
@@ -82,14 +106,15 @@ def setup_logging(
     )
     file_handler.setLevel(numeric_level)
     file_handler.setFormatter(formatter)
+    file_handler.addFilter(redaction_filter)
     root_logger.addHandler(file_handler)
-    
-    # Обработчик для консоли
+
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(numeric_level)
     console_handler.setFormatter(formatter)
+    console_handler.addFilter(SecretRedactionFilter())
     root_logger.addHandler(console_handler)
-    
+
     # Настройка логирования для внешних библиотек
     logging.getLogger('telegram').setLevel(logging.WARNING)
     logging.getLogger('httpx').setLevel(logging.WARNING)
