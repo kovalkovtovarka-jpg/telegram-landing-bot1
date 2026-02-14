@@ -1,7 +1,7 @@
 """
 Mock implementation of LandingAIAgent for testing
 """
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 import logging
 
 logger = logging.getLogger(__name__)
