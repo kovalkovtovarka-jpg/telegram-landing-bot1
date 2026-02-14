@@ -14,8 +14,8 @@ class TestConversationFlow:
     """Тесты для flow диалога"""
     
     @pytest.fixture
-    def bot_instance(self, test_db_session):
-        """Создает экземпляр бота для тестирования"""
+    def bot_instance(self, test_db_session, mock_application):
+        """Создает экземпляр бота для тестирования (mock_application отключает проверку токена)"""
         with patch('backend.bot.telegram_bot.SessionLocal', return_value=test_db_session):
             with patch('backend.bot.telegram_bot.init_db'):
                 with patch.dict('os.environ', {

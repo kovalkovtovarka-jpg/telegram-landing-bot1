@@ -45,6 +45,25 @@ def test_db_session():
 
 
 @pytest.fixture
+def mock_application():
+    """
+    Патчит telegram.Application.builder() чтобы не вызывать реальную валидацию токена.
+    Использовать в фикстурах, создающих LandingBot.
+    """
+    from unittest.mock import patch, MagicMock
+    mock_builder = MagicMock()
+    mock_app = MagicMock()
+    mock_app.bot = MagicMock()
+    mock_app.bot.send_message = AsyncMock()
+    mock_app.bot.send_document = AsyncMock()
+    mock_app.bot.get_file = AsyncMock()
+    mock_builder.token.return_value.build.return_value = mock_app
+    with patch('backend.bot.telegram_bot.Application') as MockApp:
+        MockApp.builder.return_value = mock_builder
+        yield MockApp
+
+
+@pytest.fixture
 def mock_user():
     """Создает mock Telegram User"""
     user = Mock(spec=User)

@@ -12,8 +12,8 @@ class TestStateRecovery:
     """Тесты для восстановления состояния из БД"""
     
     @pytest.fixture
-    def bot_instance(self, test_db_session):
-        """Создает экземпляр бота для тестирования"""
+    def bot_instance(self, test_db_session, mock_application):
+        """Создает экземпляр бота для тестирования (mock_application отключает проверку токена)"""
         with patch('backend.bot.telegram_bot.SessionLocal', return_value=test_db_session):
             with patch('backend.bot.telegram_bot.init_db'):
                 with patch.dict('os.environ', {
@@ -111,7 +111,7 @@ class TestStateRecovery:
         agent_state = retrieved_state.data["ai_agent_state"]
         
         # Восстанавливаем агента
-        agent = MockLandingAIAgent.from_serialized_state(int(user_id), agent_state)
+        agent = MockLandingAIAgent.from_serialized_state(agent_state, user_id=int(user_id))
         
         # Проверяем восстановление
         assert agent.mode == "SINGLE"

@@ -162,6 +162,7 @@ class TestAIAgent:
         """Тест: восстановление из сериализованного состояния"""
         user_id = 12345
         serialized = {
+            'user_id': user_id,
             'mode': 'SINGLE',
             'stage': 'products',
             'collected_data': {
