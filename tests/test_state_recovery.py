@@ -12,8 +12,8 @@ class TestStateRecovery:
     """Тесты для восстановления состояния из БД"""
     
     @pytest.fixture
-    def bot_instance(self, test_db_session, mock_application):
-        """Создает экземпляр бота для тестирования (mock_application отключает проверку токена)"""
+    async def bot_instance(self, test_db_session, mock_application):
+        """Создает экземпляр бота для тестирования (async fixture = выполняется в event loop)"""
         with patch('backend.bot.telegram_bot.SessionLocal', return_value=test_db_session):
             with patch('backend.bot.telegram_bot.init_db'):
                 with patch.dict('os.environ', {

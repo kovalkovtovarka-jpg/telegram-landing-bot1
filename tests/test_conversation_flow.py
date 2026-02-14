@@ -14,8 +14,8 @@ class TestConversationFlow:
     """Тесты для flow диалога"""
     
     @pytest.fixture
-    def bot_instance(self, test_db_session, mock_application):
-        """Создает экземпляр бота для тестирования (mock_application отключает проверку токена)"""
+    async def bot_instance(self, test_db_session, mock_application):
+        """Создает экземпляр бота для тестирования (async fixture = выполняется в event loop)"""
         with patch('backend.bot.telegram_bot.SessionLocal', return_value=test_db_session):
             with patch('backend.bot.telegram_bot.init_db'):
                 with patch.dict('os.environ', {
@@ -24,7 +24,6 @@ class TestConversationFlow:
                     'OPENAI_API_KEY': 'test_key'
                 }):
                     bot = LandingBot()
-                    # Заменяем реальные компоненты на моки
                     bot.code_generator = Mock()
                     bot.template_loader = Mock()
                     bot.template_selector = Mock()
