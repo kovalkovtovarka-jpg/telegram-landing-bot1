@@ -1,6 +1,11 @@
 # Deploy to Railway
 # Runs on push to main branch
-# Uses Railway CLI for deployment
+#
+# Secrets (Project Token, NOT account token):
+#   RAILWAY_TOKEN     - Project token: Railway → open PROJECT "exciting-quietude" → Settings (gear) → Tokens → Create Token
+#   RAILWAY_SERVICE_ID - Service ID (UUID from URL .../service/<uuid>)
+#   RAILWAY_PROJECT_ID - Project ID (UUID from URL .../project/<uuid>) — recommended
+#   RAILWAY_ENVIRONMENT_ID - Environment ID (e.g. production UUID) — recommended if using --project
 
 name: Deploy to Railway
 
@@ -11,31 +16,33 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+    container: ghcr.io/railwayapp/cli:latest
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-    
-    - name: Install Railway CLI
-      run: |
-        npm install -g @railway/cli
 
     - name: Check Railway secrets
       run: |
         if [ -z "${{ secrets.RAILWAY_SERVICE_ID }}" ]; then
-          echo "::error::RAILWAY_SERVICE_ID is not set. Add it in GitHub: Settings → Secrets and variables → Actions. Get the value from Railway: Project → your service → Settings → copy Service ID."
+          echo "::error::RAILWAY_SERVICE_ID is not set."
           exit 1
         fi
-    
+        if [ -z "${{ secrets.RAILWAY_TOKEN }}" ]; then
+          echo "::error::RAILWAY_TOKEN is not set. Create PROJECT token: Railway → project exciting-quietude → Settings (gear icon) → Tokens → Create Token. Do NOT use token from railway.com/account/tokens."
+          exit 1
+        fi
+
     - name: Deploy to Railway
       env:
         RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
+        RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+        RAILWAY_ENVIRONMENT_ID: ${{ secrets.RAILWAY_ENVIRONMENT_ID }}
       run: |
-        railway up --service "$RAILWAY_SERVICE_ID" --ci
+        CMD="railway up --service $RAILWAY_SERVICE_ID --ci"
+        if [ -n "$RAILWAY_PROJECT_ID" ] && [ -n "$RAILWAY_ENVIRONMENT_ID" ]; then
+          CMD="$CMD --project $RAILWAY_PROJECT_ID --environment $RAILWAY_ENVIRONMENT_ID"
+        fi
+        $CMD
 
