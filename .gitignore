@@ -72,6 +72,15 @@ Thumbs.db
 *.tmp
 *.temp
 
+# Testing / coverage
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Railway (локальная привязка проекта)
+.railway/
+
 # Alembic
-# Не игнорируем миграции - они должны быть в репозитории
+# Не игнорируем миграции — они должны быть в репозитории
 # alembic/versions/*.pyc

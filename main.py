@@ -3,7 +3,7 @@
 Запуск Telegram бота для генерации лендингов
 """
 import asyncio
-import logging
+import os
 import sys
 from backend.config import Config
 from backend.bot.telegram_bot import LandingBot
@@ -30,62 +30,56 @@ logger = get_logger(__name__)
 
 async def main():
     """Главная функция запуска бота"""
+    bot = None
     try:
         # Проверка конфигурации
         logger.info("Проверка конфигурации...")
         Config.validate()
         logger.info("✓ Конфигурация валидна")
-        
+
         # Инициализация базы данных
         logger.info("Инициализация базы данных...")
         init_db()
         logger.info("✓ База данных инициализирована")
-        
+
         # Очистка старых файлов
         logger.info("Очистка старых файлов...")
         from backend.utils.helpers import cleanup_old_files
-        import os
-        
-        # Очищаем старые проекты (старше 7 дней)
+
         files_dir = Config.FILES_DIR
         if os.path.exists(files_dir):
             cleanup_old_files(files_dir, days_old=7)
             logger.info("✓ Старые файлы очищены")
-        
-        # Очищаем старые промпты (старше 3 дней)
-        prompts_dir = os.path.join(files_dir, 'prompts')
+
+        prompts_dir = os.path.join(files_dir, "prompts")
         if os.path.exists(prompts_dir):
             cleanup_old_files(prompts_dir, days_old=3)
             logger.info("✓ Старые промпты очищены")
-        
+
         # Очищаем устаревший кэш промптов
         from backend.utils.cache import prompt_cache
         deleted_cache = prompt_cache.clear_expired()
         if deleted_cache > 0:
             logger.info(f"✓ Очищено {deleted_cache} устаревших записей кэша")
-        
-        # Создание бота
+
+        # Создание и запуск бота
         logger.info("Создание Telegram бота...")
         bot = LandingBot()
         logger.info("✓ Бот создан")
-        
-        # Запуск бота
         logger.info("Запуск бота...")
         await bot.start_polling()
-        
-        # Ожидание завершения
-        try:
-            await asyncio.Event().wait()  # Ожидаем бесконечно
-        except KeyboardInterrupt:
-            logger.info("Получен сигнал остановки...")
+
+    except KeyboardInterrupt:
+        logger.info("Получен сигнал остановки...")
+        if bot is not None:
             await bot.stop()
             logger.info("Бот остановлен")
-    
+
     except ValueError as e:
-        logger.error(f"Ошибка конфигурации: {e}")
-        logger.error("Проверьте файл .env и установите необходимые переменные")
+        logger.error(f"Ошибка конфигурации при старте: {e}")
+        logger.error("Установите недостающие переменные и перезапустите бота.")
         sys.exit(1)
-    
+
     except Exception as e:
         logger.error(f"Критическая ошибка: {e}", exc_info=True)
         sys.exit(1)

@@ -47,9 +47,9 @@ def check_env():
     for var, description in REQUIRED_VARS.items():
         value = os.getenv(var)
         if value:
-            # Скрываем чувствительные данные
-            if 'TOKEN' in var or 'KEY' in var:
-                display_value = value[:10] + '...' if len(value) > 10 else '***'
+            # Скрываем чувствительные данные (не показываем даже начало токена/ключа)
+            if 'TOKEN' in var or 'KEY' in var or 'SECRET' in var.upper():
+                display_value = '***'
             else:
                 display_value = value
             print(f"  ✅ {var:25} = {display_value}")
@@ -63,7 +63,7 @@ def check_env():
         for var in PROVIDER_VARS[provider]:
             value = os.getenv(var)
             if value:
-                display_value = value[:10] + '...' if len(value) > 10 else '***'
+                display_value = '***'  # ключи API не показываем
                 print(f"  ✅ {var:25} = {display_value}")
             else:
                 print(f"  ❌ {var:25} = НЕ УСТАНОВЛЕН (требуется для {provider})")
@@ -92,9 +92,9 @@ def check_env():
         for var in missing:
             print(f"   - {var}")
         print("\n⚠️  Установите отсутствующие переменные перед деплоем!")
-        print("\n💡 Как установить на Abacus:")
-        print("   1. Через веб-интерфейс: Settings → Environment Variables")
-        print("   2. Через CLI: abacus env set VARIABLE_NAME=value")
+        print("\n💡 Как установить:")
+        print("   • Локально: создайте файл .env в корне проекта")
+        print("   • Railway: проект → сервис → Variables → Add Variable")
         return False
     else:
         print("✅ Все переменные окружения установлены!")
