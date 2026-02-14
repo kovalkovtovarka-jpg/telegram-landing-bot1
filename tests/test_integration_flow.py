@@ -16,19 +16,20 @@ class TestIntegrationFlow:
     
     @pytest.fixture
     async def bot_instance(self, test_db_session, mock_application):
-        """Создает экземпляр бота для тестирования (async = в event loop)"""
+        """Создает экземпляр бота для тестирования (async = в event loop). Фоновый cleanup отключен."""
         with patch('backend.bot.telegram_bot.SessionLocal', return_value=test_db_session):
             with patch('backend.bot.telegram_bot.init_db'):
-                with patch.dict('os.environ', {
-                    'TELEGRAM_BOT_TOKEN': 'test_token',
-                    'DATABASE_URL': 'sqlite:///:memory:',
-                    'OPENAI_API_KEY': 'test_key'
-                }):
-                    bot = LandingBot()
-                    bot.code_generator = Mock()
-                    bot.template_loader = Mock()
-                    bot.template_selector = Mock()
-                    yield bot
+                with patch.object(LandingBot, '_start_ai_agents_cleanup_task', return_value=None):
+                    with patch.dict('os.environ', {
+                        'TELEGRAM_BOT_TOKEN': 'test_token',
+                        'DATABASE_URL': 'sqlite:///:memory:',
+                        'OPENAI_API_KEY': 'test_key'
+                    }):
+                        bot = LandingBot()
+                        bot.code_generator = Mock()
+                        bot.template_loader = Mock()
+                        bot.template_selector = Mock()
+                        yield bot
     
     def _get_conversation_state(self, context: ContextTypes.DEFAULT_TYPE) -> int:
         """
@@ -143,8 +144,7 @@ class TestIntegrationFlow:
         # Проверяем историю диалога
         assert len(agent.conversation_history) > 0
         
-        # Шаг 7: Проверяем обновление данных в БД
-        test_db_session.refresh(db_state)
+        # Шаг 7: Проверяем обновление данных в БД (запрос заново, без refresh — сессия могла измениться)
         updated_db_state = test_db_session.query(UserState).filter(
             UserState.user_id == str(user_id)
         ).first()
