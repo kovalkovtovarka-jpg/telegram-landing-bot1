@@ -13,17 +13,20 @@ class MockLandingAIAgent:
     Предоставляет детерминированные ответы для тестирования.
     """
     
-    def __init__(self, mode: str = 'SINGLE', user_id: int = 0):
+    def __init__(self, user_id_or_mode=None, mode=None, user_id=None):
         """
-        Инициализация mock агента
-        (для тестов можно передать user_id, но реальный LandingAIAgent принимает только mode)
-        
-        Args:
-            mode: Режим работы ('SINGLE' или 'MULTI')
-            user_id: ID пользователя (опционально, для тестирования, не используется в реальном коде)
+        Инициализация mock агента.
+        Поддерживает вызовы: MockLandingAIAgent(user_id, mode='SINGLE') и MockLandingAIAgent('SINGLE').
         """
-        self.user_id = user_id
-        self.mode = mode
+        if mode is not None and (user_id_or_mode is None or isinstance(user_id_or_mode, int)):
+            self.user_id = user_id_or_mode if isinstance(user_id_or_mode, int) else (user_id or 0)
+            self.mode = mode
+        elif isinstance(user_id_or_mode, str):
+            self.mode = user_id_or_mode
+            self.user_id = user_id if user_id is not None else 0
+        else:
+            self.user_id = user_id_or_mode if isinstance(user_id_or_mode, int) else (user_id or 0)
+            self.mode = mode if mode is not None else 'SINGLE'
         self.stage = 'general_info'
         self.collected_data = {
             'mode': mode,
@@ -167,26 +170,22 @@ class MockLandingAIAgent:
             'mode': self.mode,
             'stage': self.stage,
             'collected_data': self.collected_data,
-            'conversation_history': self.conversation_history[-self.max_history_length:]
+            'conversation_history': self.conversation_history[-self.max_history_length:],
+            'user_id': self.user_id,
         }
     
     @classmethod
-    def from_serialized_state(cls, state: Dict[str, Any]) -> 'MockLandingAIAgent':
+    def from_serialized_state(cls, state: Dict[str, Any], user_id: Optional[int] = None) -> 'MockLandingAIAgent':
         """
-        Восстанавливает агента из сериализованного состояния
-        (совместимо с реальным LandingAIAgent)
-        
-        Args:
-            state: Словарь с состоянием
-            
-        Returns:
-            Восстановленный экземпляр MockLandingAIAgent
+        Восстанавливает агента из сериализованного состояния.
+        (совместимо с реальным LandingAIAgent: вызов с одним аргументом state)
+        Опционально принимает user_id для совместимости с кодом бота.
         """
-        # user_id не используется в реальном LandingAIAgent
         agent = cls(state.get('mode', 'SINGLE'))
         agent.stage = state.get('stage', 'general_info')
         agent.collected_data = state.get('collected_data', agent.collected_data)
         agent.conversation_history = state.get('conversation_history', [])
+        agent.user_id = state.get('user_id', user_id if user_id is not None else 0)
         return agent
     
     async def start_conversation(self) -> str:
