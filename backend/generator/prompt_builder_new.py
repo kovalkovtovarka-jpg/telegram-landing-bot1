@@ -201,7 +201,15 @@ class NewPromptBuilder:
 - Accent: {suggested_colors['accent']} (дополнительный акцент)
 - Dark BG: {suggested_colors['bg_dark']} (темный фон)
 - Darker BG: {suggested_colors['bg_darker']} (еще более темный фон)
-
+"""
+        preferred_colors = (user_data.get('preferred_colors') or '').strip()
+        if preferred_colors:
+            prompt += f"""
+ПРЕДПОЧТЕНИЯ ПОЛЬЗОВАТЕЛЯ ПО ЦВЕТАМ (учти при оформлении!):
+Пользователь указал: «{preferred_colors}»
+Скорректируй цветовую схему в эту сторону, сохраняя контраст и читаемость.
+"""
+        prompt += f"""
 ШРИФТЫ (ОБЯЗАТЕЛЬНО использовать эти шрифты!):
 - Заголовки: {suggested_fonts[0]} (font-weight: 700-900)
 - Основной текст: {suggested_fonts[1]} (font-weight: 300-600)
