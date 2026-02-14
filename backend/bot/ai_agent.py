@@ -34,6 +34,7 @@ class LandingAIAgent:
 - Цель сайта (продажа / заявки / каталог)
 - Целевая аудитория
 - Стиль и настроение (минимал, премиум, яркий, строгий и т.д.)
+- Предпочтительные цвета (спроси: «Есть ли предпочтительные цвета для лендинга? Например: синий, зелёный, нейтральные. Если нет — подберу по стилю товара.»)
 - Язык сайта
 - Примеры сайтов (если есть)
 - Куда отправлять заявки (email / telegram / форма)
@@ -76,6 +77,10 @@ class LandingAIAgent:
 - Фильтры или категории
 
 === ЭТАП 4. ПРОВЕРКА ===
+
+Перед переходом к сводке и кнопкам «Да, генерировать» ОБЯЗАТЕЛЬНО:
+- Убедись, что пользователь отправил хотя бы одно фото товара для главного изображения лендинга.
+- Если фото ещё не было — явно попроси: «Отправьте, пожалуйста, хотя бы одно фото товара для лендинга (оно будет главным изображением на странице).» Не переходи к сводке без фото.
 
 Перед генерацией:
 - Проверь, хватает ли данных.
@@ -233,7 +238,7 @@ class LandingAIAgent:
         for file_info in files:
             file_path = file_info.get('path', '')
             file_type = file_info.get('type', 'photo')  # photo или video
-            original_name = file_info.get('filename', 'file')
+            original_name = file_info.get('original_name') or file_info.get('filename', 'file')
             
             if file_path and os.path.exists(file_path):
                 # Определяем, для какого блока предназначен файл на основе текущего этапа и количества файлов
@@ -693,6 +698,11 @@ class LandingAIAgent:
         if 'notification_type' not in self.collected_data['general_info']:
             self.collected_data['general_info']['notification_type'] = 'telegram'
         
+        # Для лендинга одного товара обязательно хотя бы одно фото для главного изображения
+        if self.mode == 'SINGLE':
+            if not self.collected_data.get('files'):
+                missing.append("Фото товара для лендинга (хотя бы одно изображение)")
+        
         # Проверяем товары
         if self.mode == 'SINGLE':
             required_product = ['product_name', 'product_description', 'new_price']
@@ -781,6 +791,7 @@ class LandingAIAgent:
         general = self.collected_data['general_info']
         user_data['design_style'] = general.get('style', 'vibrant')
         user_data['notification_type'] = general.get('notification_type', 'telegram')
+        user_data['preferred_colors'] = general.get('preferred_colors', '')
         
         # Товары
         if self.mode == 'SINGLE':

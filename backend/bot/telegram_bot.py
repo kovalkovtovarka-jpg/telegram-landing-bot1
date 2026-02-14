@@ -1572,10 +1572,14 @@ class LandingBot:
             await file.download_to_drive(file_path)
             
             # Добавляем информацию о файле
+            ext = 'jpg' if file_type == 'photo' else (getattr(file_obj, 'mime_type', '') or 'mp4').split('/')[-1]
+            if ext not in ('jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'mov', 'webm'):
+                ext = 'jpg' if file_type == 'photo' else 'mp4'
             file_info = {
                 'path': file_path,
                 'type': file_type,
-                'filename': file_obj.file_id,
+                'filename': f"photo_{file_obj.file_unique_id[:8]}.{ext}",
+                'original_name': f"photo_{file_obj.file_unique_id[:8]}.{ext}",
                 'block': None  # Будет определено в диалоге
             }
             
@@ -1633,7 +1637,9 @@ class LandingBot:
         
         files = collected_data.get('files', [])
         if files:
-            summary.append(f"**Файлов:** {len(files)}")
+            summary.append(f"**Файлов (фото/видео):** {len(files)}")
+        else:
+            summary.append("**Фото товара:** ⚠️ не добавлено (нужно хотя бы одно)")
         
         return "\n".join(summary)
     
@@ -1722,6 +1728,16 @@ class LandingBot:
             user_data = agent.convert_to_user_data()
             logger.info(f"Converted user_data keys: {list(user_data.keys())}")
             logger.info(f"Converted user_data values: {user_data}")
+            
+            # Без фото лендинг будет без главного изображения — требуем хотя бы одно
+            has_photo = bool(user_data.get('hero_media') or user_data.get('photos') or agent.collected_data.get('files'))
+            if not has_photo:
+                await query.edit_message_text(
+                    "📷 Чтобы лендинг выглядел привлекательно, нужна хотя бы одна фотография товара.\n\n"
+                    "Отправьте фото в чат (оно будет главным изображением на странице), "
+                    "затем снова нажмите «Да, генерировать»."
+                )
+                return AI_CONVERSATION
             
             # Валидация данных перед генерацией
             logger.info(f"Validating data for user {user_id}")
