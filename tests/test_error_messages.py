@@ -11,8 +11,8 @@ class TestFormatErrorMessage:
     """Тесты для _format_error_message"""
 
     @pytest.fixture
-    def bot(self, mock_application):
-        """Бот с замоканным Application"""
+    async def bot(self, mock_application):
+        """Бот с замоканным Application (async fixture = в event loop, без RuntimeError)"""
         with patch("backend.bot.telegram_bot.SessionLocal", return_value=MagicMock()):
             with patch("backend.bot.telegram_bot.init_db"):
                 with patch.dict(
