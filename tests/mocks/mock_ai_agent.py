@@ -29,7 +29,7 @@ class MockLandingAIAgent:
             self.mode = mode if mode is not None else 'SINGLE'
         self.stage = 'general_info'
         self.collected_data = {
-            'mode': mode,
+            'mode': self.mode,
             'general_info': {},
             'products': [],
             'current_product_index': 0,
@@ -41,16 +41,13 @@ class MockLandingAIAgent:
         
         logger.info(f"MockLandingAIAgent initialized for user {user_id}, mode: {mode}")
     
-    async def process_message(self, message: str) -> str:
+    async def process_message(self, message: str, user_id: int = None, files: List[Dict] = None) -> str:
         """
-        Обрабатывает сообщение пользователя и возвращает детерминированный ответ
-        
-        Args:
-            message: Текст сообщения пользователя
-            
-        Returns:
-            Ответ агента
+        Обрабатывает сообщение пользователя и возвращает детерминированный ответ.
+        Сигнатура совместима с реальным LandingAIAgent.process_message(message, user_id, files).
         """
+        if not isinstance(message, str):
+            message = str(message) if message else ""
         message_lower = message.lower()
         
         # Сохраняем в историю
