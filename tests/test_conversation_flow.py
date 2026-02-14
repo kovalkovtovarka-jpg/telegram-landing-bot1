@@ -68,8 +68,8 @@ class TestConversationFlow:
         # Проверяем, что агента нет
         assert user_id not in bot_instance.ai_agents
         
-        # Создаем агента
-        with patch('backend.bot.telegram_bot.LandingAIAgent', MockLandingAIAgent):
+        # Создаем агента (патчим там, откуда импортируется: ai_agent)
+        with patch('backend.bot.ai_agent.LandingAIAgent', MockLandingAIAgent):
             agent = MockLandingAIAgent(user_id, mode='SINGLE')
             bot_instance.ai_agents[user_id] = agent
         

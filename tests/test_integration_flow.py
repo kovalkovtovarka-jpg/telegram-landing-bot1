@@ -100,7 +100,7 @@ class TestIntegrationFlow:
         
         # Подменяем LandingAIAgent на MockLandingAIAgent через monkeypatch
         # Это нужно сделать до вызова start_ai_agent
-        with patch('backend.bot.telegram_bot.LandingAIAgent', MockLandingAIAgent):
+        with patch('backend.bot.ai_agent.LandingAIAgent', MockLandingAIAgent):
             # Вызываем handler выбора режима
             result = await bot_instance.handle_mode_selection(mock_update_with_callback, mock_context)
             
@@ -131,7 +131,7 @@ class TestIntegrationFlow:
         mock_update.message.reply_text = AsyncMock()
         
         # Вызываем handler обработки сообщения (используем тот же patch для LandingAIAgent)
-        with patch('backend.bot.telegram_bot.LandingAIAgent', MockLandingAIAgent):
+        with patch('backend.bot.ai_agent.LandingAIAgent', MockLandingAIAgent):
             result = await bot_instance.handle_ai_message(mock_update, mock_context)
         
         # Проверяем, что handler вернул AI_CONVERSATION (продолжение диалога)
@@ -164,7 +164,7 @@ class TestIntegrationFlow:
         mock_update.message.reply_text = AsyncMock()
         
         # Используем patch для LandingAIAgent при обработке сообщения
-        with patch('backend.bot.telegram_bot.LandingAIAgent', MockLandingAIAgent):
+        with patch('backend.bot.ai_agent.LandingAIAgent', MockLandingAIAgent):
             result = await bot_instance.handle_ai_message(mock_update, mock_context)
         
         assert result == AI_CONVERSATION
