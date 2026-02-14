@@ -24,10 +24,18 @@ jobs:
     - name: Install Railway CLI
       run: |
         npm install -g @railway/cli
+
+    - name: Check Railway secrets
+      run: |
+        if [ -z "${{ secrets.RAILWAY_SERVICE_ID }}" ]; then
+          echo "::error::RAILWAY_SERVICE_ID is not set. Add it in GitHub: Settings → Secrets and variables → Actions. Get the value from Railway: Project → your service → Settings → copy Service ID."
+          exit 1
+        fi
     
     - name: Deploy to Railway
       env:
         RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
       run: |
-        railway up --service ${{ secrets.RAILWAY_SERVICE_ID }}
+        railway up --service "$RAILWAY_SERVICE_ID" --ci
 
