@@ -100,7 +100,10 @@ tests/
 ├── test_conversation_flow.py    # Тесты flow диалога
 ├── test_database_persistence.py # Тесты персистентности БД
 ├── test_state_recovery.py       # Тесты восстановления состояния
-└── test_ai_agent.py            # Тесты AI-агента
+├── test_ai_agent.py             # Тесты AI-агента
+├── test_prompt_builder.py       # Тесты NewPromptBuilder (стили, цвета, промпт)
+├── test_code_generator.py       # Тесты CodeGenerator (с моками LLM)
+└── test_error_messages.py       # Тесты форматирования ошибок для пользователя
 ```
 
 ## Запуск тестов

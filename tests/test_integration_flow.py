@@ -15,8 +15,8 @@ class TestIntegrationFlow:
     """Integration тесты для полного потока обработки"""
     
     @pytest.fixture
-    def bot_instance(self, test_db_session, mock_application):
-        """Создает экземпляр бота для тестирования с подменой БД и без проверки токена"""
+    async def bot_instance(self, test_db_session, mock_application):
+        """Создает экземпляр бота для тестирования (async = в event loop)"""
         with patch('backend.bot.telegram_bot.SessionLocal', return_value=test_db_session):
             with patch('backend.bot.telegram_bot.init_db'):
                 with patch.dict('os.environ', {
@@ -45,7 +45,6 @@ class TestIntegrationFlow:
         return context.user_data.get('conversation_state') or context.user_data.get('ai_agent_active')
     
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="RuntimeError: no running event loop in CI; needs async fixture refactor")
     async def test_full_user_flow(
         self, 
         bot_instance, 
