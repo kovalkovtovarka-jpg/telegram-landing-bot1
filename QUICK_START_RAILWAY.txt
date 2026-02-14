@@ -1,0 +1,22 @@
+═══════════════════════════════════════════════════════════════
+БЫСТРЫЙ СТАРТ: RAILWAY ЗА 5 ШАГОВ
+═══════════════════════════════════════════════════════════════
+
+ШАГ 1: railway.app → Login with GitHub
+
+ШАГ 2: New Project → Deploy from GitHub repo → Выберите репозиторий
+
+ШАГ 3: New → Database → Add PostgreSQL
+
+ШАГ 4: В карточке бота → Variables → Добавьте:
+   - TELEGRAM_BOT_TOKEN = ваш_токен
+   - LLM_PROVIDER = openai
+   - OPENAI_API_KEY = ваш_ключ
+   - LLM_MODEL = gpt-4o
+
+ШАГ 5: Проверьте Logs → Должно быть "Бот запущен"
+
+ГОТОВО! Бот работает!
+
+Подробнее: RAILWAY_DEPLOY_GUIDE.md
+

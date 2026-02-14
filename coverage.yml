@@ -1,0 +1,9 @@
+# Coverage configuration for future coverage services
+# This file prepares the project for coverage badge integration
+
+coverage:
+  status:
+    project:
+      default:
+        target: 70%
+

@@ -1,0 +1,77 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+landing_bot.db
+
+# Logs
+*.log
+bot.log
+*.log.*
+
+# Prompts cache (if stored in files)
+prompts_cache/
+*.prompt_cache
+
+# Generated files
+generated_landings/
+*.zip
+
+# User uploaded files and temporary content
+files/
+temp_*
+user_*_content/
+user_*_photos/
+user_*_videos/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+# Alembic
+# Не игнорируем миграции - они должны быть в репозитории
+# alembic/versions/*.pyc

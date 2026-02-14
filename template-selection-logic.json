@@ -1,0 +1,313 @@
+{
+  "version": "1.0",
+  "description": "Логика выбора шаблона лендинга на основе данных пользователя",
+  "decision_tree": {
+    "step_1_product_type": {
+      "question": "Что вы продаете?",
+      "type": "single_choice",
+      "options": [
+        {
+          "id": "physical_product",
+          "label": "Физический товар",
+          "description": "Одежда, электроника, товары для дома, аксессуары и т.д."
+        },
+        {
+          "id": "service",
+          "label": "Услуга",
+          "description": "Консультации, ремонт, установка, обучение"
+        },
+        {
+          "id": "digital_product",
+          "label": "Цифровой товар",
+          "description": "Онлайн-курсы, вебинары, софт, подписки"
+        }
+      ],
+      "next_step": "step_2_business_model"
+    },
+    "step_2_business_model": {
+      "condition": {
+        "if": "step_1_product_type == 'physical_product'",
+        "then": {
+          "question": "Как вы продаете товар?",
+          "type": "single_choice",
+          "options": [
+            {
+              "id": "single_item",
+              "label": "Один товар",
+              "description": "Продаю один конкретный товар"
+            },
+            {
+              "id": "variants",
+              "label": "Товар с вариантами",
+              "description": "Есть выбор размера, цвета, комплектации"
+            },
+            {
+              "id": "dropshipping",
+              "label": "Дропшиппинг",
+              "description": "Быстрая продажа товаров из каталога"
+            }
+          ],
+          "next_step": "step_3_price_range"
+        },
+        "elif": "step_1_product_type == 'service'",
+        "then": {
+          "question": "Что за услуга?",
+          "type": "single_choice",
+          "options": [
+            {
+              "id": "consultation",
+              "label": "Консультация/запись",
+              "description": "Нужна форма записи на консультацию или услугу"
+            }
+          ],
+          "template_suggestion": "service_consultation",
+          "next_step": "step_3_price_range"
+        },
+        "elif": "step_1_product_type == 'digital_product'",
+        "then": {
+          "question": "Что за цифровой товар?",
+          "type": "single_choice",
+          "options": [
+            {
+              "id": "course",
+              "label": "Онлайн-курс",
+              "description": "Образовательный курс или мастер-класс"
+            }
+          ],
+          "template_suggestion": "digital_course",
+          "next_step": "step_3_price_range"
+        }
+      }
+    },
+    "step_3_price_range": {
+      "question": "Какая цена товара/услуги?",
+      "type": "single_choice",
+      "options": [
+        {
+          "id": "low",
+          "label": "До 100 BYN",
+          "description": "Низкий чек, импульсивная покупка"
+        },
+        {
+          "id": "medium",
+          "label": "100-500 BYN",
+          "description": "Средний чек, нужно обосновать цену"
+        },
+        {
+          "id": "high",
+          "label": "500+ BYN",
+          "description": "Высокий чек, детальное описание"
+        }
+      ],
+      "next_step": "step_4_special_scenarios"
+    },
+    "step_4_special_scenarios": {
+      "question": "Есть ли особые условия?",
+      "type": "multiple_choice",
+      "options": [
+        {
+          "id": "limited_offer",
+          "label": "Ограниченное предложение",
+          "description": "Акция, скидка, распродажа с ограниченным временем"
+        },
+        {
+          "id": "pre_order",
+          "label": "Предзаказ",
+          "description": "Товар еще не поступил, но можно заказать заранее"
+        },
+        {
+          "id": "seasonal",
+          "label": "Сезонный товар",
+          "description": "Актуален в определенное время года или к празднику"
+        },
+        {
+          "id": "b2b",
+          "label": "Продажа бизнесу",
+          "description": "B2B клиенты, оптовые продажи"
+        },
+        {
+          "id": "none",
+          "label": "Нет особых условий",
+          "description": "Обычная продажа"
+        }
+      ],
+      "next_step": "template_selection"
+    },
+    "template_selection": {
+      "rules": [
+        {
+          "conditions": {
+            "product_type": "physical_product",
+            "business_model": "dropshipping",
+            "price_range": ["low", "medium"],
+            "special_scenarios": []
+          },
+          "template": "physical_dropshipping",
+          "priority": 1,
+          "reason": "Дропшиппинг товар с упором на срочность"
+        },
+        {
+          "conditions": {
+            "product_type": "physical_product",
+            "business_model": "variants",
+            "price_range": ["medium", "high"],
+            "special_scenarios": []
+          },
+          "template": "physical_multi",
+          "priority": 1,
+          "reason": "Товар с вариантами выбора требует селектор"
+        },
+        {
+          "conditions": {
+            "product_type": "physical_product",
+            "business_model": "single_item",
+            "price_range": ["low"],
+            "special_scenarios": []
+          },
+          "template": "low_price_impulse",
+          "priority": 1,
+          "reason": "Низкий чек - импульсивная покупка"
+        },
+        {
+          "conditions": {
+            "product_type": "physical_product",
+            "business_model": "single_item",
+            "price_range": ["medium"],
+            "special_scenarios": []
+          },
+          "template": "medium_price_justified",
+          "priority": 1,
+          "reason": "Средний чек - нужно обосновать цену"
+        },
+        {
+          "conditions": {
+            "product_type": "physical_product",
+            "business_model": "single_item",
+            "price_range": ["high"],
+            "special_scenarios": []
+          },
+          "template": "high_price_detailed",
+          "priority": 1,
+          "reason": "Высокий чек - детальное описание"
+        },
+        {
+          "conditions": {
+            "product_type": "physical_product",
+            "business_model": "single_item",
+            "price_range": ["low", "medium"],
+            "special_scenarios": []
+          },
+          "template": "physical_single",
+          "priority": 2,
+          "reason": "Стандартная продажа физического товара"
+        },
+        {
+          "conditions": {
+            "special_scenarios": ["limited_offer"]
+          },
+          "template": "limited_offer",
+          "priority": 1,
+          "reason": "Акция с элементами срочности",
+          "override": true
+        },
+        {
+          "conditions": {
+            "special_scenarios": ["pre_order"]
+          },
+          "template": "pre_order",
+          "priority": 1,
+          "reason": "Предзаказ нового товара",
+          "override": true
+        },
+        {
+          "conditions": {
+            "special_scenarios": ["seasonal"]
+          },
+          "template": "seasonal",
+          "priority": 1,
+          "reason": "Сезонный товар с акцентом на актуальность",
+          "override": false
+        },
+        {
+          "conditions": {
+            "special_scenarios": ["b2b"]
+          },
+          "template": "b2b",
+          "priority": 1,
+          "reason": "B2B продажи требуют особого подхода",
+          "override": true
+        }
+      ]
+    }
+  },
+  "quick_selection": {
+    "description": "Быстрый выбор шаблона по ключевым словам",
+    "keywords": {
+      "physical_single": ["подушка", "покрывало", "товар", "продажа", "один товар", "единичный"],
+      "physical_multi": ["размер", "цвет", "вариант", "выбор", "комплектация", "варианты"],
+      "physical_dropshipping": ["дропшиппинг", "каталог", "быстро", "много товаров"],
+      "service_consultation": ["услуга", "консультация", "запись", "прием", "обучение"],
+      "digital_course": ["курс", "обучение", "вебинар", "мастер-класс", "онлайн"],
+      "low_price_impulse": ["дешево", "до 100", "недорого", "бюджет"],
+      "medium_price_justified": ["100-500", "средняя цена", "обосновать"],
+      "high_price_detailed": ["дорого", "500+", "премиум", "качество"],
+      "limited_offer": ["акция", "скидка", "распродажа", "ограничено", "успей"],
+      "pre_order": ["предзаказ", "новинка", "скоро", "поступит"],
+      "seasonal": ["зима", "лето", "сезон", "праздник", "новый год"],
+      "b2b": ["бизнес", "опт", "корпоратив", "b2b", "для компаний"]
+    }
+  },
+  "compatibility_matrix": {
+    "description": "Совместимость шаблонов с особыми сценариями",
+    "matrix": {
+      "physical_single": {
+        "compatible_with": ["limited_offer", "seasonal"],
+        "not_compatible_with": ["pre_order", "b2b"]
+      },
+      "physical_multi": {
+        "compatible_with": ["limited_offer", "seasonal"],
+        "not_compatible_with": ["pre_order", "b2b"]
+      },
+      "physical_dropshipping": {
+        "compatible_with": ["limited_offer", "seasonal"],
+        "not_compatible_with": ["pre_order", "b2b"]
+      },
+      "service_consultation": {
+        "compatible_with": ["limited_offer"],
+        "not_compatible_with": ["pre_order", "seasonal", "b2b"]
+      },
+      "digital_course": {
+        "compatible_with": ["limited_offer"],
+        "not_compatible_with": ["pre_order", "seasonal", "b2b"]
+      },
+      "low_price_impulse": {
+        "compatible_with": ["limited_offer", "seasonal"],
+        "not_compatible_with": ["pre_order", "b2b"]
+      },
+      "medium_price_justified": {
+        "compatible_with": ["limited_offer", "seasonal"],
+        "not_compatible_with": ["pre_order", "b2b"]
+      },
+      "high_price_detailed": {
+        "compatible_with": ["limited_offer"],
+        "not_compatible_with": ["pre_order", "seasonal", "b2b"]
+      },
+      "limited_offer": {
+        "can_combine_with": ["physical_single", "physical_multi", "low_price_impulse", "medium_price_justified"]
+      },
+      "pre_order": {
+        "standalone": true,
+        "priority": "high"
+      },
+      "seasonal": {
+        "can_combine_with": ["physical_single", "physical_multi", "low_price_impulse"],
+        "modifies": ["design", "color_scheme", "imagery"]
+      },
+      "b2b": {
+        "standalone": true,
+        "priority": "high",
+        "overrides": ["all"]
+      }
+    }
+  }
+}

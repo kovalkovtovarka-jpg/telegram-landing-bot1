@@ -1,0 +1,936 @@
+{
+  "version": "1.0",
+  "description": "Шаблоны лендингов для чат-бота по перепродаже товаров",
+  "templates": {
+    "physical_single": {
+      "id": "physical_single",
+      "name": "Физический товар - Прямая продажа",
+      "description": "Продажа одного конкретного товара с детальным описанием",
+      "use_case": "Когда продаете один товар (например, ортопедическая подушка, гаджет, одежда)",
+      "price_range": ["low", "medium", "high"],
+      "structure": {
+        "sections": [
+          {
+            "id": "hero",
+            "name": "Hero секция",
+            "required": true,
+            "elements": ["title", "subtitle", "product_image", "price", "order_form", "badge"]
+          },
+          {
+            "id": "gallery",
+            "name": "Галерея товара",
+            "required": true,
+            "elements": ["product_images_carousel", "dots", "navigation"]
+          },
+          {
+            "id": "description",
+            "name": "Описание товара",
+            "required": true,
+            "elements": ["text_description", "features_list", "characteristics", "images"]
+          },
+          {
+            "id": "benefits",
+            "name": "Преимущества",
+            "required": true,
+            "elements": ["benefits_grid", "icons", "short_descriptions"]
+          },
+          {
+            "id": "reviews",
+            "name": "Отзывы",
+            "required": true,
+            "elements": ["reviews_carousel", "photos", "stars", "text"]
+          },
+          {
+            "id": "final_cta",
+            "name": "Финальный CTA",
+            "required": true,
+            "elements": ["product_image", "price", "countdown_timer", "order_form"]
+          }
+        ]
+      },
+      "features": {
+        "countdown_timer": true,
+        "image_carousel": true,
+        "reviews_carousel": true,
+        "phone_formatting": true,
+        "scroll_animations": true
+      },
+      "required_fields": {
+        "product_name": "string",
+        "product_description": "text",
+        "old_price": "string",
+        "new_price": "string",
+        "discount_percent": "number",
+        "product_images": "array",
+        "features": "array",
+        "benefits": "array",
+        "reviews": "array",
+        "delivery_info": "string",
+        "payment_info": "string",
+        "warranty_info": "string"
+      },
+      "prompt_template": "Создай лендинг для продажи товара: {product_name}. Описание: {product_description}. Цена со скидкой: {new_price}, старая цена: {old_price}. Ключевые преимущества: {benefits}. Нужны: hero секция с формой заказа, галерея фото, описание товара, блок преимуществ, отзывы, финальный CTA с таймером обратного отсчета."
+    },
+    "physical_multi": {
+      "id": "physical_multi",
+      "name": "Физический товар - Многовариантность",
+      "description": "Товар с разными вариантами (размер, цвет, комплектация)",
+      "use_case": "Когда у товара есть варианты выбора (размеры одежды, цвета, комплекты)",
+      "price_range": ["medium", "high"],
+      "structure": {
+        "sections": [
+          {
+            "id": "hero",
+            "name": "Hero секция",
+            "required": true,
+            "elements": ["title", "subtitle", "product_image", "variants_selector", "price_dynamic", "order_form", "badge"]
+          },
+          {
+            "id": "variants_gallery",
+            "name": "Галерея вариантов",
+            "required": true,
+            "elements": ["variant_tabs", "images_per_variant", "descriptions"]
+          },
+          {
+            "id": "size_guide",
+            "name": "Таблица размеров",
+            "required": false,
+            "elements": ["size_table", "modal", "guide_image"]
+          },
+          {
+            "id": "description",
+            "name": "Описание товара",
+            "required": true,
+            "elements": ["text_description", "variants_comparison", "characteristics"]
+          },
+          {
+            "id": "benefits",
+            "name": "Преимущества",
+            "required": true,
+            "elements": ["benefits_grid"]
+          },
+          {
+            "id": "reviews",
+            "name": "Отзывы",
+            "required": true,
+            "elements": ["reviews_carousel"]
+          },
+          {
+            "id": "final_cta",
+            "name": "Финальный CTA",
+            "required": true,
+            "elements": ["variants_selector", "price", "countdown_timer", "order_form"]
+          }
+        ]
+      },
+      "features": {
+        "countdown_timer": true,
+        "variant_selector": true,
+        "price_calculator": true,
+        "image_carousel": true,
+        "size_guide_modal": true,
+        "phone_formatting": true
+      },
+      "required_fields": {
+        "product_name": "string",
+        "product_description": "text",
+        "variants": "array",
+        "base_price": "string",
+        "variant_prices": "object",
+        "product_images": "object",
+        "size_guide": "object",
+        "features": "array",
+        "benefits": "array",
+        "reviews": "array"
+      },
+      "prompt_template": "Создай лендинг для товара с вариантами выбора: {product_name}. Варианты: {variants}. Базовая цена: {base_price}. Нужен селектор вариантов с динамическим изменением цены и фото. Также нужна таблица размеров в модальном окне."
+    },
+    "physical_dropshipping": {
+      "id": "physical_dropshipping",
+      "name": "Физический товар - Дропшиппинг",
+      "description": "Упрощенный лендинг для быстрой продажи товаров из каталога",
+      "use_case": "Когда продаете товары через дропшиппинг и нужно быстро запускать лендинги",
+      "price_range": ["low", "medium"],
+      "structure": {
+        "sections": [
+          {
+            "id": "hero",
+            "name": "Hero секция",
+            "required": true,
+            "elements": ["title", "product_image", "price", "order_form", "urgency_badge"]
+          },
+          {
+            "id": "description",
+            "name": "Краткое описание",
+            "required": true,
+            "elements": ["text_description", "key_features", "images"]
+          },
+          {
+            "id": "benefits",
+            "name": "Ключевые преимущества",
+            "required": true,
+            "elements": ["benefits_list", "icons"]
+          },
+          {
+            "id": "social_proof",
+            "name": "Социальное доказательство",
+            "required": true,
+            "elements": ["purchase_counter", "recent_orders", "reviews_mini"]
+          },
+          {
+            "id": "final_cta",
+            "name": "Финальный CTA",
+            "required": true,
+            "elements": ["product_image", "price", "countdown_timer", "order_form", "stock_indicator"]
+          }
+        ]
+      },
+      "features": {
+        "countdown_timer": true,
+        "stock_counter": true,
+        "purchase_counter": true,
+        "urgency_elements": true,
+        "phone_formatting": true
+      },
+      "required_fields": {
+        "product_name": "string",
+        "product_description": "text",
+        "price": "string",
+        "discount_percent": "number",
+        "product_images": "array",
+        "key_features": "array",
+        "stock_count": "number",
+        "delivery_time": "string"
+      },
+      "prompt_template": "Создай быстрый лендинг для дропшиппинга товара: {product_name}. Цена: {price}. Ключевые фичи: {key_features}. Нужны элементы срочности: счетчик остатков, таймер, счетчик покупок. Минимум секций, максимум конверсии."
+    },
+    "service_consultation": {
+      "id": "service_consultation",
+      "name": "Услуги - Запись на консультацию",
+      "description": "Лендинг для услуг с формой записи/заявки",
+      "use_case": "Когда продаете услуги (консультации, ремонт, установка, обучение)",
+      "price_range": ["medium", "high"],
+      "structure": {
+        "sections": [
+          {
+            "id": "hero",
+            "name": "Hero секция",
+            "required": true,
+            "elements": ["title", "subtitle", "service_image", "booking_form", "price_range"]
+          },
+          {
+            "id": "about_service",
+            "name": "О сервисе",
+            "required": true,
+            "elements": ["detailed_description", "process_steps", "benefits"]
+          },
+          {
+            "id": "service_packages",
+            "name": "Пакеты услуг",
+            "required": false,
+            "elements": ["packages_comparison", "pricing_table", "features_per_package"]
+          },
+          {
+            "id": "expert_info",
+            "name": "Информация об эксперте",
+            "required": true,
+            "elements": ["expert_photo", "credentials", "experience", "certificates"]
+          },
+          {
+            "id": "reviews",
+            "name": "Отзывы клиентов",
+            "required": true,
+            "elements": ["reviews_grid", "before_after", "testimonials"]
+          },
+          {
+            "id": "faq",
+            "name": "Частые вопросы",
+            "required": true,
+            "elements": ["accordion_faq", "answers"]
+          },
+          {
+            "id": "final_cta",
+            "name": "Финальный CTA",
+            "required": true,
+            "elements": ["booking_form", "contact_info", "calendar_integration"]
+          }
+        ]
+      },
+      "features": {
+        "booking_form": true,
+        "calendar_picker": false,
+        "service_packages": true,
+        "faq_accordion": true,
+        "phone_formatting": true,
+        "before_after_slider": false
+      },
+      "required_fields": {
+        "service_name": "string",
+        "service_description": "text",
+        "expert_name": "string",
+        "expert_info": "text",
+        "service_price": "string",
+        "service_packages": "array",
+        "process_steps": "array",
+        "benefits": "array",
+        "reviews": "array",
+        "faq": "array",
+        "contact_info": "object"
+      },
+      "prompt_template": "Создай лендинг для услуги: {service_name}. Описание: {service_description}. Эксперт: {expert_name}. Цена: {service_price}. Нужны: форма записи, информация об эксперте, этапы работы, пакеты услуг, отзывы, FAQ."
+    },
+    "digital_course": {
+      "id": "digital_course",
+      "name": "Цифровой товар - Онлайн-курс",
+      "description": "Лендинг для продажи образовательных продуктов",
+      "use_case": "Когда продаете онлайн-курсы, вебинары, мастер-классы",
+      "price_range": ["medium", "high"],
+      "structure": {
+        "sections": [
+          {
+            "id": "hero",
+            "name": "Hero секция",
+            "required": true,
+            "elements": ["title", "subtitle", "course_preview", "price", "enrollment_form", "bonus_badge"]
+          },
+          {
+            "id": "course_program",
+            "name": "Программа курса",
+            "required": true,
+            "elements": ["modules_list", "lessons_count", "duration", "curriculum"]
+          },
+          {
+            "id": "about_author",
+            "name": "Об авторе",
+            "required": true,
+            "elements": ["author_photo", "bio", "achievements", "credentials"]
+          },
+          {
+            "id": "course_results",
+            "name": "Результаты курса",
+            "required": true,
+            "elements": ["results_list", "before_after", "skills_acquired"]
+          },
+          {
+            "id": "bonuses",
+            "name": "Бонусы",
+            "required": true,
+            "elements": ["bonus_list", "value_calculation", "bonus_descriptions"]
+          },
+          {
+            "id": "reviews",
+            "name": "Отзывы студентов",
+            "required": true,
+            "elements": ["reviews_grid", "video_testimonials", "success_stories"]
+          },
+          {
+            "id": "pricing",
+            "name": "Цены и тарифы",
+            "required": true,
+            "elements": ["price_options", "payment_plans", "comparison_table", "discount_timer"]
+          },
+          {
+            "id": "faq",
+            "name": "Частые вопросы",
+            "required": true,
+            "elements": ["accordion_faq"]
+          },
+          {
+            "id": "final_cta",
+            "name": "Финальный CTA",
+            "required": true,
+            "elements": ["enrollment_form", "price", "bonuses_reminder", "urgency_timer"]
+          }
+        ]
+      },
+      "features": {
+        "countdown_timer": true,
+        "video_preview": false,
+        "payment_plans": true,
+        "bonus_calculator": true,
+        "faq_accordion": true,
+        "phone_formatting": true
+      },
+      "required_fields": {
+        "course_name": "string",
+        "course_description": "text",
+        "author_name": "string",
+        "author_info": "text",
+        "course_price": "string",
+        "course_program": "array",
+        "modules": "array",
+        "results": "array",
+        "bonuses": "array",
+        "reviews": "array",
+        "faq": "array",
+        "pricing_options": "array"
+      },
+      "prompt_template": "Создай лендинг для онлайн-курса: {course_name}. Автор: {author_name}. Программа: {course_program}. Цена: {course_price}. Бонусы: {bonuses}. Нужны: описание программы, результаты курса, информация об авторе, отзывы, FAQ, таймер скидки."
+    },
+    "low_price_impulse": {
+      "id": "low_price_impulse",
+      "name": "Низкий чек - Импульсивная покупка",
+      "description": "Лендинг для товаров до 100 BYN с упором на быстрое решение",
+      "use_case": "Недорогие товары, где важна скорость принятия решения",
+      "price_range": ["low"],
+      "structure": {
+        "sections": [
+          {
+            "id": "hero",
+            "name": "Hero секция",
+            "required": true,
+            "elements": ["title", "product_image", "price", "discount_badge", "order_form", "urgency"]
+          },
+          {
+            "id": "quick_benefits",
+            "name": "Быстрые преимущества",
+            "required": true,
+            "elements": ["benefits_short", "icons", "visual"]
+          },
+          {
+            "id": "social_proof",
+            "name": "Социальное доказательство",
+            "required": true,
+            "elements": ["purchase_counter", "recent_orders", "reviews_mini"]
+          },
+          {
+            "id": "final_cta",
+            "name": "Финальный CTA",
+            "required": true,
+            "elements": ["product_image", "price", "countdown_timer", "order_form", "stock_indicator"]
+          }
+        ]
+      },
+      "features": {
+        "countdown_timer": true,
+        "stock_counter": true,
+        "purchase_counter": true,
+        "urgency_elements": true,
+        "simple_form": true,
+        "phone_formatting": true
+      },
+      "design_principles": [
+        "Минимум секций",
+        "Яркие CTA кнопки",
+        "Элементы срочности",
+        "Простые формы",
+        "Визуальные акценты на цене"
+      ],
+      "required_fields": {
+        "product_name": "string",
+        "product_description": "text",
+        "price": "string",
+        "discount_percent": "number",
+        "product_images": "array",
+        "key_benefits": "array",
+        "stock_count": "number"
+      },
+      "prompt_template": "Создай импульсный лендинг для товара: {product_name}. Цена: {price}. Низкий чек - нужны элементы срочности: счетчик остатков, таймер, счетчик покупок. Минимум секций, максимум визуальных акцентов на цене и кнопках."
+    },
+    "medium_price_justified": {
+      "id": "medium_price_justified",
+      "name": "Средний чек - Обоснование цены",
+      "description": "Лендинг для товаров 100-500 BYN с детальным обоснованием стоимости",
+      "use_case": "Средний ценовой сегмент, где нужно убедить в ценности товара",
+      "price_range": ["medium"],
+      "structure": {
+        "sections": [
+          {
+            "id": "hero",
+            "name": "Hero секция",
+            "required": true,
+            "elements": ["title", "subtitle", "product_image", "price", "order_form"]
+          },
+          {
+            "id": "value_proposition",
+            "name": "Ценностное предложение",
+            "required": true,
+            "elements": ["unique_selling_point", "value_explanation", "comparison"]
+          },
+          {
+            "id": "detailed_benefits",
+            "name": "Детальные преимущества",
+            "required": true,
+            "elements": ["benefits_detailed", "proof_points", "comparisons"]
+          },
+          {
+            "id": "quality_indicators",
+            "name": "Индикаторы качества",
+            "required": true,
+            "elements": ["materials_info", "certificates", "warranty", "manufacturer_info"]
+          },
+          {
+            "id": "reviews",
+            "name": "Отзывы",
+            "required": true,
+            "elements": ["reviews_detailed", "photos", "ratings"]
+          },
+          {
+            "id": "final_cta",
+            "name": "Финальный CTA",
+            "required": true,
+            "elements": ["product_image", "price", "discount", "order_form", "guarantees"]
+          }
+        ]
+      },
+      "features": {
+        "countdown_timer": true,
+        "price_comparison": false,
+        "value_calculator": false,
+        "reviews_detailed": true,
+        "phone_formatting": true
+      },
+      "design_principles": [
+        "Детальное описание качества",
+        "Сравнения с конкурентами",
+        "Доказательства ценности",
+        "Визуализация преимуществ",
+        "Усиление доверия"
+      ],
+      "required_fields": {
+        "product_name": "string",
+        "product_description": "text",
+        "old_price": "string",
+        "new_price": "string",
+        "unique_value": "text",
+        "benefits": "array",
+        "quality_indicators": "array",
+        "reviews": "array",
+        "guarantees": "array"
+      },
+      "prompt_template": "Создай лендинг для товара среднего ценового сегмента: {product_name}. Цена: {new_price}, была {old_price}. Уникальная ценность: {unique_value}. Нужно детально обосновать цену через преимущества, качество, сравнения. Важно показать ценность за деньги."
+    },
+    "high_price_detailed": {
+      "id": "high_price_detailed",
+      "name": "Высокий чек - Детальное описание",
+      "description": "Лендинг для дорогих товаров 500+ BYN с максимальной детализацией",
+      "use_case": "Дорогие товары, где критично доверие и полная информация",
+      "price_range": ["high"],
+      "structure": {
+        "sections": [
+          {
+            "id": "hero",
+            "name": "Hero секция",
+            "required": true,
+            "elements": ["title", "subtitle", "product_image", "price", "order_form", "premium_badge"]
+          },
+          {
+            "id": "detailed_description",
+            "name": "Детальное описание",
+            "required": true,
+            "elements": ["full_description", "specifications", "materials", "technology"]
+          },
+          {
+            "id": "expert_reviews",
+            "name": "Экспертные обзоры",
+            "required": true,
+            "elements": ["expert_opinions", "video_reviews", "technical_analysis"]
+          },
+          {
+            "id": "comparison",
+            "name": "Сравнение с конкурентами",
+            "required": true,
+            "elements": ["comparison_table", "advantages", "price_justification"]
+          },
+          {
+            "id": "guarantees",
+            "name": "Гарантии и сервис",
+            "required": true,
+            "elements": ["warranty_info", "service_info", "return_policy", "support"]
+          },
+          {
+            "id": "testimonials",
+            "name": "Отзывы покупателей",
+            "required": true,
+            "elements": ["detailed_reviews", "case_studies", "video_testimonials"]
+          },
+          {
+            "id": "faq",
+            "name": "Частые вопросы",
+            "required": true,
+            "elements": ["accordion_faq", "detailed_answers"]
+          },
+          {
+            "id": "final_cta",
+            "name": "Финальный CTA",
+            "required": true,
+            "elements": ["product_image", "price", "payment_options", "order_form", "consultation_offer"]
+          }
+        ]
+      },
+      "features": {
+        "countdown_timer": true,
+        "payment_plans": true,
+        "consultation_form": true,
+        "comparison_table": true,
+        "video_support": false,
+        "faq_accordion": true,
+        "phone_formatting": true
+      },
+      "design_principles": [
+        "Максимум информации",
+        "Профессиональный дизайн",
+        "Детальные описания",
+        "Экспертность и доверие",
+        "Варианты оплаты",
+        "Персональный подход"
+      ],
+      "required_fields": {
+        "product_name": "string",
+        "product_description": "text",
+        "price": "string",
+        "detailed_specifications": "object",
+        "materials": "array",
+        "technology": "text",
+        "expert_reviews": "array",
+        "comparison_data": "object",
+        "warranty_info": "text",
+        "testimonials": "array",
+        "faq": "array",
+        "payment_options": "array"
+      },
+      "prompt_template": "Создай детальный лендинг для дорогого товара: {product_name}. Цена: {price}. Характеристики: {detailed_specifications}. Нужно максимум информации: детальные описания, экспертные обзоры, сравнения, гарантии, FAQ. Важно вызвать доверие и обосновать высокую цену."
+    },
+    "limited_offer": {
+      "id": "limited_offer",
+      "name": "Ограниченное предложение",
+      "description": "Лендинг с акцией/скидкой и элементами срочности",
+      "use_case": "Когда есть временная акция, скидка, распродажа",
+      "price_range": ["low", "medium", "high"],
+      "structure": {
+        "sections": [
+          {
+            "id": "hero",
+            "name": "Hero секция",
+            "required": true,
+            "elements": ["title", "discount_badge", "product_image", "price_comparison", "countdown_timer", "order_form", "urgency"]
+          },
+          {
+            "id": "offer_details",
+            "name": "Детали предложения",
+            "required": true,
+            "elements": ["discount_explanation", "original_price", "discounted_price", "savings_amount", "conditions"]
+          },
+          {
+            "id": "urgency_indicators",
+            "name": "Индикаторы срочности",
+            "required": true,
+            "elements": ["stock_counter", "purchase_counter", "timer", "limited_quantity"]
+          },
+          {
+            "id": "benefits",
+            "name": "Преимущества",
+            "required": true,
+            "elements": ["benefits_list"]
+          },
+          {
+            "id": "reviews",
+            "name": "Отзывы",
+            "required": true,
+            "elements": ["reviews_carousel"]
+          },
+          {
+            "id": "final_cta",
+            "name": "Финальный CTA",
+            "required": true,
+            "elements": ["product_image", "price_comparison", "countdown_timer", "order_form", "stock_warning"]
+          }
+        ]
+      },
+      "features": {
+        "countdown_timer": true,
+        "stock_counter": true,
+        "purchase_counter": true,
+        "discount_calculator": true,
+        "urgency_animations": true,
+        "phone_formatting": true
+      },
+      "design_principles": [
+        "Яркие акценты на скидке",
+        "Множественные таймеры",
+        "Счетчики остатков",
+        "Элементы срочности",
+        "Визуальное выделение цены"
+      ],
+      "required_fields": {
+        "product_name": "string",
+        "original_price": "string",
+        "discounted_price": "string",
+        "discount_percent": "number",
+        "offer_end_date": "datetime",
+        "stock_count": "number",
+        "product_images": "array",
+        "benefits": "array",
+        "reviews": "array"
+      },
+      "prompt_template": "Создай лендинг с ограниченным предложением: {product_name}. Было {original_price}, стало {discounted_price}. Скидка {discount_percent}%. Акция до {offer_end_date}. Осталось товара: {stock_count}. Нужны множественные элементы срочности: таймер, счетчики, визуальные акценты на скидке."
+    },
+    "pre_order": {
+      "id": "pre_order",
+      "name": "Новинка - Предзаказ",
+      "description": "Лендинг для предзаказа нового товара",
+      "use_case": "Когда товар еще не поступил, но можно предзаказать",
+      "price_range": ["medium", "high"],
+      "structure": {
+        "sections": [
+          {
+            "id": "hero",
+            "name": "Hero секция",
+            "required": true,
+            "elements": ["title", "new_badge", "product_image", "pre_order_price", "arrival_date", "pre_order_form"]
+          },
+          {
+            "id": "product_preview",
+            "name": "Предпросмотр товара",
+            "required": true,
+            "elements": ["renders", "concept_images", "video_preview", "specifications"]
+          },
+          {
+            "id": "why_preorder",
+            "name": "Зачем предзаказывать",
+            "required": true,
+            "elements": ["benefits_list", "early_bird_discount", "guaranteed_delivery", "exclusive_access"]
+          },
+          {
+            "id": "delivery_timeline",
+            "name": "Сроки доставки",
+            "required": true,
+            "elements": ["timeline", "stages", "dates"]
+          },
+          {
+            "id": "reviews_prototype",
+            "name": "Отзывы о прототипе",
+            "required": false,
+            "elements": ["beta_reviews", "expert_opinions"]
+          },
+          {
+            "id": "final_cta",
+            "name": "Финальный CTA",
+            "required": true,
+            "elements": ["product_image", "pre_order_price", "arrival_date", "pre_order_form", "limited_spots"]
+          }
+        ]
+      },
+      "features": {
+        "countdown_timer": false,
+        "arrival_date_timer": true,
+        "pre_order_form": true,
+        "timeline_visualization": false,
+        "phone_formatting": true
+      },
+      "design_principles": [
+        "Акцент на новизне",
+        "Сроки поступления",
+        "Преимущества раннего заказа",
+        "Ограниченность предложения",
+        "Доверие к бренду"
+      ],
+      "required_fields": {
+        "product_name": "string",
+        "product_description": "text",
+        "pre_order_price": "string",
+        "regular_price": "string",
+        "arrival_date": "datetime",
+        "early_bird_discount": "number",
+        "preview_images": "array",
+        "specifications": "object",
+        "delivery_timeline": "array",
+        "pre_order_benefits": "array"
+      },
+      "prompt_template": "Создай лендинг для предзаказа новинки: {product_name}. Предзаказ по цене: {pre_order_price}, после поступления: {regular_price}. Дата поступления: {arrival_date}. Нужны: предпросмотр товара, преимущества предзаказа, сроки доставки, форма предзаказа."
+    },
+    "seasonal": {
+      "id": "seasonal",
+      "name": "Сезонный товар",
+      "description": "Лендинг для сезонных товаров с акцентом на актуальность",
+      "use_case": "Сезонные товары (зимние, летние, праздничные)",
+      "price_range": ["low", "medium"],
+      "structure": {
+        "sections": [
+          {
+            "id": "hero",
+            "name": "Hero секция",
+            "required": true,
+            "elements": ["title", "seasonal_badge", "product_image", "price", "order_form", "seasonal_relevance"]
+          },
+          {
+            "id": "seasonal_context",
+            "name": "Сезонный контекст",
+            "required": true,
+            "elements": ["season_description", "why_now", "use_cases", "lifestyle_images"]
+          },
+          {
+            "id": "product_description",
+            "name": "Описание товара",
+            "required": true,
+            "elements": ["description", "seasonal_features", "benefits"]
+          },
+          {
+            "id": "benefits",
+            "name": "Преимущества",
+            "required": true,
+            "elements": ["benefits_list"]
+          },
+          {
+            "id": "reviews",
+            "name": "Отзывы",
+            "required": true,
+            "elements": ["reviews_carousel"]
+          },
+          {
+            "id": "final_cta",
+            "name": "Финальный CTA",
+            "required": true,
+            "elements": ["product_image", "price", "seasonal_urgency", "order_form"]
+          }
+        ]
+      },
+      "features": {
+        "countdown_timer": true,
+        "seasonal_badges": true,
+        "weather_integration": false,
+        "phone_formatting": true
+      },
+      "design_principles": [
+        "Сезонная цветовая схема",
+        "Акцент на актуальности",
+        "Lifestyle изображения",
+        "Срочность сезона",
+        "Эмоциональная связь"
+      ],
+      "required_fields": {
+        "product_name": "string",
+        "season": "string",
+        "product_description": "text",
+        "price": "string",
+        "seasonal_relevance": "text",
+        "use_cases": "array",
+        "product_images": "array",
+        "benefits": "array",
+        "reviews": "array"
+      },
+      "prompt_template": "Создай сезонный лендинг для товара: {product_name}. Сезон: {season}. Актуальность: {seasonal_relevance}. Цена: {price}. Нужны: сезонный контекст, акцент на актуальности, lifestyle изображения, эмоциональная связь с сезоном."
+    },
+    "b2b": {
+      "id": "b2b",
+      "name": "B2B продажи",
+      "description": "Лендинг для продаж бизнесу",
+      "use_case": "Когда продаете товары/услуги другим бизнесам",
+      "price_range": ["medium", "high"],
+      "structure": {
+        "sections": [
+          {
+            "id": "hero",
+            "name": "Hero секция",
+            "required": true,
+            "elements": ["title", "subtitle", "product_image", "contact_form", "business_focus"]
+          },
+          {
+            "id": "business_value",
+            "name": "Бизнес-ценность",
+            "required": true,
+            "elements": ["roi_calculation", "cost_savings", "efficiency_gains", "case_studies"]
+          },
+          {
+            "id": "solutions",
+            "name": "Решения для бизнеса",
+            "required": true,
+            "elements": ["use_cases", "industry_specific", "scalability", "integration"]
+          },
+          {
+            "id": "clients",
+            "name": "Клиенты и кейсы",
+            "required": true,
+            "elements": ["client_logos", "case_studies", "testimonials", "results"]
+          },
+          {
+            "id": "pricing_plans",
+            "name": "Тарифы и условия",
+            "required": true,
+            "elements": ["pricing_table", "volume_discounts", "custom_pricing", "contract_info"]
+          },
+          {
+            "id": "faq",
+            "name": "Частые вопросы",
+            "required": true,
+            "elements": ["accordion_faq", "business_specific_questions"]
+          },
+          {
+            "id": "final_cta",
+            "name": "Финальный CTA",
+            "required": true,
+            "elements": ["contact_form", "consultation_offer", "demo_request", "contact_info"]
+          }
+        ]
+      },
+      "features": {
+        "countdown_timer": false,
+        "roi_calculator": false,
+        "consultation_form": true,
+        "demo_request": true,
+        "faq_accordion": true,
+        "phone_formatting": true
+      },
+      "design_principles": [
+        "Профессиональный дизайн",
+        "Акцент на ROI",
+        "Бизнес-метрики",
+        "Кейсы и результаты",
+        "Персональный подход",
+        "Минимум маркетинговых трюков"
+      ],
+      "required_fields": {
+        "product_name": "string",
+        "product_description": "text",
+        "business_value": "text",
+        "roi_data": "object",
+        "use_cases": "array",
+        "client_logos": "array",
+        "case_studies": "array",
+        "pricing_plans": "array",
+        "faq": "array",
+        "contact_info": "object"
+      },
+      "prompt_template": "Создай B2B лендинг для: {product_name}. Бизнес-ценность: {business_value}. ROI данные: {roi_data}. Нужны: акцент на бизнес-выгоды, ROI расчеты, кейсы клиентов, профессиональный дизайн, форма для консультации. Минимум маркетинговых трюков, максимум бизнес-метрик."
+    }
+  },
+  "common_features": {
+    "forms": {
+      "name_field": "Обязательное поле",
+      "phone_field": "Обязательное поле с форматированием",
+      "email_field": "Опциональное поле",
+      "comment_field": "Опциональное поле"
+    },
+    "timers": {
+      "countdown_timer": {
+        "description": "Таймер обратного отсчета до конца акции",
+        "format": "ЧЧ:ММ:СС",
+        "reset": "Обнуление в 00:00 ежедневно"
+      }
+    },
+    "carousels": {
+      "gallery": {
+        "description": "Карусель фотографий товара",
+        "features": ["scroll-snap", "dots", "navigation", "centered_items"]
+      },
+      "reviews": {
+        "description": "Карусель отзывов",
+        "features": ["scroll-snap", "dots", "navigation", "one_per_view"]
+      }
+    },
+    "animations": {
+      "scroll_reveal": true,
+      "hover_effects": true,
+      "smooth_transitions": true
+    },
+    "telegram_integration": {
+      "message_format": "Новый заказ: {product_name}\nИмя: {name}\nНомер телефона: {phone}\nСтоимость: {price}\nВремя заказа: {time}",
+      "required_fields": ["product_name", "name", "phone", "price", "order_time"]
+    }
+  },
+  "tiktok_pixel": {
+    "integration": true,
+    "placement": "before </body> tag",
+    "events": ["page", "complete_payment"]
+  }
+}

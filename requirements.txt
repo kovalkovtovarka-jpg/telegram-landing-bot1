@@ -1,0 +1,29 @@
+# Python Telegram Bot
+python-telegram-bot==20.7
+
+# LLM APIs
+openai==1.6.0
+anthropic==0.18.1
+google-generativeai==0.3.2
+
+# Database
+sqlalchemy==2.0.23
+alembic==1.13.1
+psycopg2-binary==2.9.9  # PostgreSQL driver
+
+# Environment
+python-dotenv==1.0.0
+
+# HTTP requests
+aiohttp==3.9.1
+httpx==0.25.2
+
+# Utils
+python-dateutil==2.8.2
+tenacity==8.2.3  # Retry механизм для LLM API
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0  # Coverage reports
+pytest-mock==3.12.0  # Enhanced mocking

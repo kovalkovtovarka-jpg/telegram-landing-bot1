@@ -1,0 +1,105 @@
+2026-01-20 00:23:38,100 - __main__ - INFO - Проверка конфигурации...
+2026-01-20 00:23:38,100 - __main__ - INFO - ✓ Конфигурация валидна
+2026-01-20 00:23:38,100 - __main__ - INFO - Инициализация базы данных...
+2026-01-20 00:23:38,101 - __main__ - INFO - ✓ База данных инициализирована
+2026-01-20 00:23:38,101 - __main__ - INFO - Создание Telegram бота...
+/home/ubuntu/creativelandingbotfixed/backend/bot/telegram_bot.py:134: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
+  quick_handler = ConversationHandler(
+/home/ubuntu/creativelandingbotfixed/backend/bot/telegram_bot.py:159: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
+  create_handler = ConversationHandler(
+2026-01-20 00:23:38,150 - __main__ - INFO - ✓ Бот создан
+2026-01-20 00:23:38,150 - __main__ - INFO - Запуск бота...
+2026-01-20 00:23:38,150 - backend.bot.telegram_bot - INFO - Запуск Telegram бота...
+2026-01-20 00:23:38,630 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getMe "HTTP/1.1 200 OK"
+2026-01-20 00:23:38,631 - telegram.ext.Application - INFO - Application started
+2026-01-20 00:23:38,790 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/deleteWebhook "HTTP/1.1 200 OK"
+2026-01-20 00:23:38,791 - backend.bot.telegram_bot - INFO - Бот запущен и готов к работе
+2026-01-20 00:23:49,270 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:23:59,429 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:24:09,588 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:24:19,747 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:24:29,906 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:24:40,064 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:24:50,231 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:25:00,389 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:25:10,547 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:25:19,768 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:25:19,769 - backend.bot.telegram_bot - INFO - User 979250893 started /create
+2026-01-20 00:25:20,264 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/sendMessage "HTTP/1.1 200 OK"
+2026-01-20 00:25:21,934 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:25:22,103 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/answerCallbackQuery "HTTP/1.1 200 OK"
+2026-01-20 00:25:22,103 - backend.bot.telegram_bot - INFO - User 979250893 selected product type: physical_product
+2026-01-20 00:25:22,277 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/editMessageText "HTTP/1.1 200 OK"
+2026-01-20 00:25:29,198 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:25:29,199 - backend.bot.telegram_bot - INFO - User 979250893 entered name: Микрофон петличный беспроводной
+2026-01-20 00:25:29,698 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/sendMessage "HTTP/1.1 200 OK"
+2026-01-20 00:25:34,756 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:25:35,252 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/sendMessage "HTTP/1.1 200 OK"
+2026-01-20 00:25:38,367 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:25:38,544 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/sendMessage "HTTP/1.1 200 OK"
+2026-01-20 00:25:40,354 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:25:40,539 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/sendMessage "HTTP/1.1 200 OK"
+2026-01-20 00:25:49,256 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:25:49,735 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getFile "HTTP/1.1 200 OK"
+2026-01-20 00:25:49,895 - httpx - INFO - HTTP Request: GET https://api.telegram.org/file/bot8314054688%3AAAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/photos/file_0.jpg "HTTP/1.1 200 OK"
+2026-01-20 00:25:50,539 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/sendMessage "HTTP/1.1 200 OK"
+2026-01-20 00:25:50,698 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getFile "HTTP/1.1 200 OK"
+2026-01-20 00:25:50,864 - httpx - INFO - HTTP Request: GET https://api.telegram.org/file/bot8314054688%3AAAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/photos/file_1.jpg "HTTP/1.1 200 OK"
+2026-01-20 00:25:51,202 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/sendMessage "HTTP/1.1 200 OK"
+2026-01-20 00:25:51,367 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getFile "HTTP/1.1 200 OK"
+2026-01-20 00:25:51,527 - httpx - INFO - HTTP Request: GET https://api.telegram.org/file/bot8314054688%3AAAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/photos/file_2.jpg "HTTP/1.1 200 OK"
+2026-01-20 00:25:51,704 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/sendMessage "HTTP/1.1 200 OK"
+2026-01-20 00:25:51,863 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getFile "HTTP/1.1 200 OK"
+2026-01-20 00:25:52,023 - httpx - INFO - HTTP Request: GET https://api.telegram.org/file/bot8314054688%3AAAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/photos/file_3.jpg "HTTP/1.1 200 OK"
+2026-01-20 00:25:52,227 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/sendMessage "HTTP/1.1 200 OK"
+2026-01-20 00:25:53,619 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:25:53,785 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/answerCallbackQuery "HTTP/1.1 200 OK"
+2026-01-20 00:25:53,976 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/editMessageText "HTTP/1.1 200 OK"
+2026-01-20 00:26:02,790 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:26:03,288 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/sendMessage "HTTP/1.1 200 OK"
+2026-01-20 00:26:12,950 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:26:13,817 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:26:14,313 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/sendMessage "HTTP/1.1 200 OK"
+2026-01-20 00:26:22,895 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:26:23,389 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/sendMessage "HTTP/1.1 200 OK"
+2026-01-20 00:26:33,056 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:26:43,215 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:26:48,756 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:26:49,252 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/sendMessage "HTTP/1.1 200 OK"
+2026-01-20 00:26:50,981 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:26:51,160 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/answerCallbackQuery "HTTP/1.1 200 OK"
+2026-01-20 00:26:51,161 - backend.bot.telegram_bot - INFO - User 979250893 confirmed generation from /create
+2026-01-20 00:26:51,335 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/editMessageText "HTTP/1.1 200 OK"
+2026-01-20 00:26:51,336 - backend.bot.telegram_bot - INFO - Starting generation for user 979250893
+2026-01-20 00:26:51,336 - backend.bot.telegram_bot - INFO - Generating with template: physical_single, data: dict_keys(['product_name', 'product_description', 'old_price', 'new_price', 'benefits', 'photos', 'photos_dir', 'product_type', 'weight', 'dimensions', 'delivery', 'discount_percent'])
+2026-01-20 00:27:24,856 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-01-20 00:27:24,857 - backend.generator.code_generator - WARNING - LLM вернул неполный код. Используем fallback-шаблон.
+2026-01-20 00:27:24,859 - backend.generator.code_generator - INFO - Copied photo 1 to generated_landings/project_4bda52fd/img/photo_1.jpg
+2026-01-20 00:27:24,859 - backend.generator.code_generator - INFO - Copied photo 2 to generated_landings/project_4bda52fd/img/photo_2.jpg
+2026-01-20 00:27:24,860 - backend.generator.code_generator - INFO - Copied photo 3 to generated_landings/project_4bda52fd/img/photo_3.jpg
+2026-01-20 00:27:24,860 - backend.generator.code_generator - INFO - Copied photo 4 to generated_landings/project_4bda52fd/img/photo_4.jpg
+2026-01-20 00:27:24,860 - backend.bot.telegram_bot - INFO - Generation successful for user 979250893
+2026-01-20 00:27:24,860 - backend.bot.telegram_bot - INFO - Copied photo to generated_landings/project_4bda52fd/img/product_1.jpg
+2026-01-20 00:27:24,860 - backend.bot.telegram_bot - INFO - Copied photo to generated_landings/project_4bda52fd/img/product_2.jpg
+2026-01-20 00:27:24,860 - backend.bot.telegram_bot - INFO - Copied photo to generated_landings/project_4bda52fd/img/product_3.jpg
+2026-01-20 00:27:24,860 - backend.bot.telegram_bot - INFO - Copied photo to generated_landings/project_4bda52fd/img/product_4.jpg
+2026-01-20 00:27:24,862 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:27:25,355 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/sendMessage "HTTP/1.1 200 OK"
+2026-01-20 00:27:25,721 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/sendDocument "HTTP/1.1 200 OK"
+2026-01-20 00:27:25,722 - backend.bot.telegram_bot - INFO - ZIP sent to user 979250893
+2026-01-20 00:27:25,722 - backend.bot.telegram_bot - INFO - Cleaned up photos dir for user 979250893
+2026-01-20 00:27:25,722 - backend.bot.telegram_bot - INFO - Cleaned up user data for 979250893
+2026-01-20 00:27:35,023 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:27:45,182 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:27:55,340 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:28:05,499 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:28:15,658 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:28:25,816 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:28:35,975 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:28:46,134 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:28:56,292 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:29:06,451 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:29:16,616 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:29:26,774 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:29:36,933 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
+2026-01-20 00:29:47,092 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8314054688:AAERs6QffgL1bYOp5ASokeoBwngJKmbgid0/getUpdates "HTTP/1.1 200 OK"
