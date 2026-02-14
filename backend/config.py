@@ -59,25 +59,29 @@ class Config:
     
     @classmethod
     def validate(cls):
-        """Проверка обязательных параметров"""
+        """Проверка обязательных параметров при старте. Ошибки сразу видны в логах (например, Railway)."""
         errors = []
         
-        if not cls.TELEGRAM_BOT_TOKEN:
-            errors.append('TELEGRAM_BOT_TOKEN не установлен')
+        if not (cls.TELEGRAM_BOT_TOKEN or '').strip():
+            errors.append('TELEGRAM_BOT_TOKEN не установлен или пустой')
+        
+        if not (cls.DATABASE_URL or '').strip():
+            errors.append('DATABASE_URL не установлен или пустой')
         
         # Проверяем ключ в зависимости от провайдера
-        if cls.LLM_PROVIDER == 'openai' and not cls.OPENAI_API_KEY:
-            errors.append('OPENAI_API_KEY не установлен')
-        elif cls.LLM_PROVIDER == 'anthropic' and not cls.ANTHROPIC_API_KEY:
-            errors.append('ANTHROPIC_API_KEY не установлен')
-        elif cls.LLM_PROVIDER == 'google' and not cls.GOOGLE_API_KEY:
-            errors.append('GOOGLE_API_KEY не установлен')
+        if cls.LLM_PROVIDER == 'openai' and not (cls.OPENAI_API_KEY or '').strip():
+            errors.append('OPENAI_API_KEY не установлен (LLM_PROVIDER=openai)')
+        elif cls.LLM_PROVIDER == 'anthropic' and not (cls.ANTHROPIC_API_KEY or '').strip():
+            errors.append('ANTHROPIC_API_KEY не установлен (LLM_PROVIDER=anthropic)')
+        elif cls.LLM_PROVIDER == 'google' and not (cls.GOOGLE_API_KEY or '').strip():
+            errors.append('GOOGLE_API_KEY не установлен (LLM_PROVIDER=google)')
         
-        # Проверка для AI-режима (требуется LLM для диалога)
-        if not cls.OPENAI_API_KEY and not cls.ANTHROPIC_API_KEY and not cls.GOOGLE_API_KEY:
-            errors.append('Не установлен ни один API ключ для LLM (требуется для AI-режима)')
+        # Проверка для AI-режима (требуется хотя бы один LLM ключ)
+        if not (cls.OPENAI_API_KEY or '').strip() and not (cls.ANTHROPIC_API_KEY or '').strip() and not (cls.GOOGLE_API_KEY or '').strip():
+            errors.append('Не установлен ни один API ключ для LLM (OPENAI_API_KEY, ANTHROPIC_API_KEY или GOOGLE_API_KEY)')
         
         if errors:
-            raise ValueError(f"Ошибки конфигурации: {', '.join(errors)}")
+            hint = 'Проверьте переменные окружения: Railway → Variables; локально — файл .env'
+            raise ValueError(f"Ошибки конфигурации при старте: {'; '.join(errors)}. {hint}")
         
         return True
