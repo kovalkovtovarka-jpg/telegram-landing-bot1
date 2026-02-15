@@ -8,7 +8,18 @@ import re
 import shutil
 from typing import Dict, Any, Optional
 from datetime import datetime
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove, BotCommand, MenuButtonCommands, KeyboardButton, ReplyKeyboardMarkup
+from telegram import (
+    Update,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    ReplyKeyboardRemove,
+    BotCommand,
+    BotCommandScopeDefault,
+    BotCommandScopeChatMember,
+    MenuButtonCommands,
+    KeyboardButton,
+    ReplyKeyboardMarkup,
+)
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -334,7 +345,15 @@ class LandingBot:
         
         # Команда /stats (только для админов)
         self.app.add_handler(CommandHandler("stats", self.stats_command))
-        
+        # Команда /admin — панель администратора
+        self.app.add_handler(CommandHandler("admin", self.admin_command))
+        # Обработчик кнопок админ-панели
+        self.app.add_handler(CallbackQueryHandler(self.handle_admin_callback, pattern="^admin_"))
+        # Обработка текста рассылки (когда админ ввёл сообщение для рассылки)
+        self.app.add_handler(MessageHandler(
+            filters.TEXT & ~filters.COMMAND,
+            self.handle_admin_broadcast_message
+        ), group=0)
         # Команда отмены AI-режима
         self.app.add_handler(CommandHandler("cancel_ai", self.cancel_ai_command))
         
@@ -883,6 +902,114 @@ class LandingBot:
         
         await update.message.reply_text(message, parse_mode='Markdown')
     
+    def _is_admin(self, user_id: int) -> bool:
+        """Проверка, является ли пользователь администратором."""
+        admin_ids = [aid.strip() for aid in Config.BOT_ADMIN_IDS if aid.strip()]
+        return not admin_ids or str(user_id) in admin_ids
+
+    async def notify_admins(self, text: str, parse_mode: Optional[str] = None) -> None:
+        """
+        Отправить сообщение всем администраторам (для алертов и мониторинга).
+        Ошибки отправки логируются, но не прерывают выполнение.
+        """
+        admin_ids = [aid.strip() for aid in Config.BOT_ADMIN_IDS if aid.strip()]
+        if not admin_ids:
+            return
+        for uid_str in admin_ids:
+            try:
+                uid = int(uid_str)
+                await self.app.bot.send_message(
+                    chat_id=uid,
+                    text=text,
+                    parse_mode=parse_mode,
+                )
+            except Exception as e:
+                logger.warning(f"Не удалось отправить алерт админу {uid_str}: {e}")
+
+    async def admin_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Команда /admin — панель администратора (меню с кнопками)."""
+        user_id = update.effective_user.id
+        context.user_data.pop('admin_waiting_broadcast', None)
+        if not self._is_admin(user_id):
+            await update.message.reply_text(
+                "❌ У вас нет прав. Эта команда только для администраторов."
+            )
+            return
+        keyboard = [
+            [InlineKeyboardButton("📊 Статистика", callback_data="admin_stats")],
+            [InlineKeyboardButton("📢 Рассылка", callback_data="admin_broadcast")],
+            [InlineKeyboardButton("❌ Закрыть", callback_data="admin_close")],
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await update.message.reply_text(
+            "🔐 **Панель администратора**\n\nВыберите действие:",
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
+        )
+
+    async def handle_admin_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Обработка нажатий кнопок админ-панели."""
+        query = update.callback_query
+        await query.answer()
+        user_id = update.effective_user.id
+        if not self._is_admin(user_id):
+            await query.edit_message_text("❌ Нет прав.")
+            return
+        data = query.data
+        if data == "admin_close":
+            await query.edit_message_text("Панель закрыта.")
+            return
+        if data == "admin_stats":
+            try:
+                from backend.utils.metrics import MetricsCollector
+                stats = MetricsCollector.get_all_stats()
+                msg = "📊 **Статистика бота**\n\n"
+                users = stats.get('users', {})
+                msg += f"👥 Пользователи: всего {users.get('total_users', 0)}, за 24ч: {users.get('new_users_24h', 0)}\n\n"
+                projects = stats.get('projects', {})
+                msg += f"📁 Проекты: всего {projects.get('total_projects', 0)}, успешных: {projects.get('completed', 0)}\n\n"
+                gens = stats.get('generations', {})
+                msg += f"⚡ Генерации: всего {gens.get('total_generations', 0)}, успешных: {gens.get('successful', 0)}"
+                await query.edit_message_text(msg, parse_mode='Markdown')
+            except Exception as e:
+                logger.error(f"Error in admin stats: {e}", exc_info=True)
+                await query.edit_message_text(f"❌ Ошибка: {e}")
+            return
+        if data == "admin_broadcast":
+            context.user_data['admin_waiting_broadcast'] = True
+            await query.edit_message_text(
+                "📢 **Рассылка**\n\n"
+                "Отправьте текст сообщения одним сообщением.\n"
+                "Оно будет отправлено всем пользователям бота.\n\n"
+                "Отмена: отправьте /admin\n"
+                "Если включён AI-режим — лучше сначала /cancel_ai.",
+                parse_mode='Markdown'
+            )
+            return
+
+    async def handle_admin_broadcast_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Обработка текста рассылки от админа (когда ждём текст после нажатия «Рассылка»)."""
+        if not update.message or not update.message.text:
+            return
+        user_id = update.effective_user.id
+        if not self._is_admin(user_id) or not context.user_data.pop('admin_waiting_broadcast', False):
+            return
+        text = update.message.text
+        from backend.utils.metrics import MetricsCollector
+        chat_ids = MetricsCollector.get_all_telegram_user_ids()
+        sent = 0
+        failed = 0
+        for cid in chat_ids:
+            try:
+                await context.bot.send_message(chat_id=cid, text=text)
+                sent += 1
+            except Exception as e:
+                failed += 1
+                logger.warning(f"Broadcast to {cid} failed: {e}")
+        await update.message.reply_text(
+            f"📢 Рассылка завершена.\nОтправлено: {sent}, не доставлено: {failed}."
+        )
+
     async def stats_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Команда /stats - статистика бота (только для админов)"""
         user_id = update.effective_user.id
@@ -1099,31 +1226,39 @@ class LandingBot:
         return ConversationHandler.END
     
     def _setup_menu_commands(self):
-        """Настройка меню команд для бота"""
-        # Команды для меню
-        commands = [
+        """Настройка меню команд: для всех — без /admin, для админов — с /admin."""
+        default_commands = [
             BotCommand("start", "Начать работу с ботом"),
             BotCommand("ai", "Создать лендинг с AI-ассистентом"),
             BotCommand("create_ai", "Создать лендинг с AI-ассистентом"),
             BotCommand("myid", "Узнать свой Telegram ID"),
             BotCommand("help", "Помощь и инструкции"),
-            BotCommand("cancel_ai", "Отменить AI-режим")
+            BotCommand("cancel_ai", "Отменить AI-режим"),
         ]
-        
-        # Устанавливаем команды асинхронно при запуске
+        admin_commands = default_commands + [
+            BotCommand("admin", "Панель администратора"),
+        ]
+
         async def setup_commands():
             try:
-                # Устанавливаем команды для меню
-                await self.app.bot.set_my_commands(commands)
-                logger.info("✓ Меню команд установлено")
-                
-                # Устанавливаем кнопку меню (опционально, для явного отображения)
+                await self.app.bot.set_my_commands(default_commands, scope=BotCommandScopeDefault())
+                logger.info("✓ Меню команд по умолчанию установлено")
+                admin_ids = [aid.strip() for aid in Config.BOT_ADMIN_IDS if aid.strip()]
+                for uid_str in admin_ids:
+                    try:
+                        uid = int(uid_str)
+                        await self.app.bot.set_my_commands(
+                            admin_commands,
+                            scope=BotCommandScopeChatMember(chat_id=uid, user_id=uid),
+                        )
+                        logger.info(f"✓ Команды для админа {uid} установлены")
+                    except (ValueError, TypeError) as e:
+                        logger.warning(f"Неверный BOT_ADMIN_IDS элемент '{uid_str}': {e}")
                 try:
                     menu_button = MenuButtonCommands()
                     await self.app.bot.set_chat_menu_button(menu_button=menu_button)
                     logger.info("✓ Кнопка меню установлена")
                 except Exception as e:
-                    # Если не поддерживается - не критично
                     logger.debug(f"Кнопка меню не установлена (может не поддерживаться): {e}")
             except Exception as e:
                 logger.warning(f"Не удалось установить меню команд: {e}")
@@ -1146,6 +1281,11 @@ class LandingBot:
         
         await self.app.updater.start_polling()
         logger.info("Бот запущен и готов к работе")
+        if Config.NOTIFY_ADMINS_ON_STARTUP:
+            from datetime import datetime
+            await self.notify_admins(
+                f"✅ Бот запущен (polling)\n{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} UTC"
+            )
     
     async def stop(self):
         """Остановка бота"""
