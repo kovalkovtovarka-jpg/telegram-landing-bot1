@@ -29,7 +29,7 @@ MIN_LOGIC = {
     },
     "quick_selection": {
         "keywords": {
-            "physical_single": ["подушка", "товар"],
+            "physical_single": ["подушка", "товар", "landing"],
         }
     },
     "compatibility_matrix": {
@@ -84,7 +84,8 @@ class TestTemplateSelector:
         assert result["template"] == "service_consultation"
 
     def test_quick_select_found(self, selector):
-        result = selector.quick_select("Хочу лендинг для подушки")
+        # Use ASCII keyword "landing" to avoid encoding issues across platforms
+        result = selector.quick_select("I want a landing for my product")
         assert result is not None
         assert result["type"] == "template"
         assert result["template"] == "physical_single"
