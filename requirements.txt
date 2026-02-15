@@ -1,5 +1,5 @@
-# Python Telegram Bot
-python-telegram-bot==20.7
+# Python Telegram Bot (22.x поддерживает httpx 0.27–0.28; 20.7 требовал ~0.25.2)
+python-telegram-bot==22.6
 
 # LLM APIs
 openai==1.6.0
