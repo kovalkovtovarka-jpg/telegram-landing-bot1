@@ -352,7 +352,7 @@ class LLMClient:
         
         try:
             if self.provider == 'openai':
-                response = self.client.chat.completions.create(
+                self.client.chat.completions.create(
                     model=self.model,
                     messages=[{"role": "user", "content": "test"}],
                     max_tokens=10
