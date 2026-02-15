@@ -20,8 +20,7 @@ class TestMainModule:
     def test_main_catches_value_error_and_exits(self, main_module):
         with patch.object(main_module.Config, "validate", side_effect=ValueError("config error")), \
              patch("main.sys.exit") as mock_exit:
-            with pytest.raises(SystemExit):
-                asyncio.run(main_module.main())
+            asyncio.run(main_module.main())
             mock_exit.assert_called_once_with(1)
 
     def test_main_calls_validate_and_init_db_on_success_path(self, main_module):
@@ -31,7 +30,7 @@ class TestMainModule:
              patch.object(main_module, "init_db") as init_db, \
              patch("main.LandingBot") as MockBot, \
              patch("main.os.path.exists", return_value=False), \
-             patch("main.prompt_cache", mock_cache):
+             patch("backend.utils.cache.prompt_cache", mock_cache):
             mock_bot_instance = MagicMock()
             mock_bot_instance.start_polling = AsyncMock()
             mock_bot_instance.stop = AsyncMock()
