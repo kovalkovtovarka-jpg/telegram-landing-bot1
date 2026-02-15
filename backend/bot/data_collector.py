@@ -1,7 +1,7 @@
 """
 Сбор данных от пользователя для генерации лендинга
 """
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, Optional
 try:
     from template_selector import TemplateSelector
 except ImportError:
