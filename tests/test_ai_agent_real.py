@@ -44,7 +44,8 @@ class TestLandingAIAgentStartConversation:
         greeting = await agent.start_conversation()
         assert greeting is not None
         assert "лендинг" in greeting.lower() or "товара" in greeting.lower()
-        assert "1/4" in greeting or "Общая информация" in greeting
+        assert "главное фото" in greeting.lower() or "шаг 1" in greeting.lower()
+        assert "описание" in greeting.lower()
         assert len(agent.conversation_history) == 1
         assert agent.conversation_history[0]["role"] == "assistant"
 
