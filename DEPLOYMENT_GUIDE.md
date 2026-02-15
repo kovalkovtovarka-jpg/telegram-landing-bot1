@@ -13,6 +13,35 @@
 
 ---
 
+## Локальная разработка
+
+Чтобы запустить бота у себя на компьютере (без деплоя):
+
+1. **Клонируйте репозиторий** и перейдите в папку проекта.
+2. **Создайте виртуальное окружение** и установите зависимости:
+   ```bash
+   python -m venv .venv
+   .venv\Scripts\activate   # Windows
+   # source .venv/bin/activate   # macOS/Linux
+   pip install -r requirements.txt
+   ```
+3. **Настройте переменные окружения.** Скопируйте `.env.example` в `.env` и заполните:
+   - `TELEGRAM_BOT_TOKEN` — токен от @BotFather
+   - `DATABASE_URL` — например `sqlite:///landing_bot.db` для локальной БД
+   - `OPENAI_API_KEY` (или ключ другого провайдера при смене `LLM_PROVIDER`)
+   ```bash
+   copy .env.example .env   # Windows
+   # cp .env.example .env   # macOS/Linux
+   ```
+   Файл `.env` в репозиторий не коммитьте (он уже в .gitignore).
+4. **Запуск:**
+   - **Polling (удобно для разработки):** `python main.py` — бот опрашивает Telegram сам.
+   - **Webhook (как на Railway):** нужен публичный URL (например, ngrok). См. WEBHOOK_GUIDE.md.
+
+Для тестов: `pip install -r requirements-dev.txt` и `pytest`. Для проверки стиля кода: `ruff check backend/ webhook.py main.py scripts/`.
+
+---
+
 ## ШАГ 1: Подготовка кода на GitHub
 
 ### 1.1. Откройте GitHub
@@ -392,17 +421,153 @@ git push -u origin main
 
 После того как деплой и бот работают, можно по желанию сделать:
 
-| Шаг | Описание |
-|-----|----------|
-| **Проверка переменных при старте** | При запуске бота проверять наличие `TELEGRAM_BOT_TOKEN`, `DATABASE_URL`, `OPENAI_API_KEY` и сразу падать с понятным сообщением в логах, если чего-то нет — так ошибки конфига видны в Railway Logs сразу. |
-| **Обновить гайд и секреты** | Убедиться, что в DEPLOYMENT_GUIDE и в GitHub Secrets указаны именно Project Token и корректный RAILWAY_SERVICE_ID (как в шагах 6.1–6.2 выше). |
-| **Алерт при падении деплоя** | В workflow GitHub Actions при ошибке деплоя отправлять уведомление (например, в Telegram админу или создать Issue), чтобы не пропустить сбой. |
-| **Staging / preview** | Отдельный деплой по PR в отдельное окружение Railway, чтобы проверять изменения до слияния в main. |
-| **Резервное копирование БД** | Если Postgres на Railway — настроить периодический дамп (pg_dump) или использовать встроенные бэкапы Railway. |
-| **Rate limiting** | Ограничение запросов на пользователя, чтобы один пользователь не перегружал бота и не сжигал лимиты OpenAI. |
-| **Аудит зависимостей** | Периодически запускать `pip audit` или `safety` в CI и обновлять уязвимые пакеты. |
+| Шаг | Статус | Описание |
+|-----|--------|----------|
+| **Проверка переменных при старте** | ✅ Сделано | `Config.validate()` в `main.py` и `webhook.py` — при отсутствии `TELEGRAM_BOT_TOKEN`, `DATABASE_URL` или ключа LLM бот падает при старте с понятным сообщением в логах. |
+| **Алерт при падении деплоя** | ✅ Сделано | В `.github/workflows/deploy.yml` job `notify-deploy-failure`: при ошибке деплоя в Telegram отправляется уведомление (нужны секреты `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ADMIN_CHAT_ID`). |
+| **Аудит зависимостей** | ✅ Сделано | В CI job **Dependency audit** запускается `pip-audit` для `requirements.txt`. См. раздел «Аудит зависимостей» ниже. |
+| **Rate limiting** | ✅ Сделано | В `backend/utils/rate_limiter.py`: лимит генераций на пользователя за период (по умолчанию `MAX_REQUESTS_PER_HOUR=10` в `.env`), проверка по БД перед генерацией. |
+| **Lint в CI** | ✅ Сделано | В CI job **Lint** запускается `ruff check` для `backend/`, `webhook.py`, `main.py`, `scripts/`. Настройки в `pyproject.toml`. |
+| **Шаблон .env и локальный запуск** | ✅ Сделано | Файл `.env.example` — список переменных без значений. В гайде раздел «Локальная разработка»: venv, установка, копирование .env, запуск `main.py` или webhook. |
+| **Обновить гайд и секреты** | По необходимости | Убедиться, что в DEPLOYMENT_GUIDE и в GitHub Secrets указаны именно Project Token и корректный RAILWAY_SERVICE_ID (как в шагах 6.1–6.2 выше). |
+| **Staging / preview** | Опционально | Отдельный деплой по PR в отдельное окружение Railway. См. раздел «Staging / Preview» ниже. |
+| **Резервное копирование БД** | Опционально | Если Postgres на Railway — периодический дамп или встроенные бэкапы. См. раздел «Резервное копирование БД» ниже. |
 
-Рекомендуется первым делом: **проверка переменных при старте** — небольшая правка в коде, зато при неправильных переменных в Railway ошибка будет видна в логах сразу при старте, а не при первом запросе пользователя.
+---
+
+### Staging / Preview
+
+Workflow **Deploy to Staging (Preview)** при каждом PR в `main`/`master` деплоит ветку PR в отдельный сервис Railway, чтобы проверять изменения до слияния.
+
+#### Зачем это нужно
+
+- Увидеть, как бот ведёт себя на реальном Railway с кодом из PR.
+- Не трогать production: падения и эксперименты только в staging.
+- CI уже гоняет тесты на PR; staging даёт «живой» бот по ссылке.
+
+#### Пошаговая настройка
+
+**Шаг 1. Создать staging-сервис в Railway**
+
+1. Откройте [Railway Dashboard](https://railway.app/dashboard), выберите тот же проект, где уже развёрнут бот (или создайте новый проект для staging).
+2. В проекте нажмите **+ New** → **Empty Service** (или **Deploy from GitHub repo** и укажите тот же репозиторий). Назовите сервис, например, `landing-bot-staging`.
+3. Для этого сервиса настройте деплой так же, как для прода: источник — ваш GitHub-репозиторий, ветка по умолчанию может быть `main` (деплой из GitHub по PR будет переопределяться нашим workflow).
+4. Откройте **Variables** у staging-сервиса. Скопируйте сюда переменные из production-сервиса (TELEGRAM_BOT_TOKEN, DATABASE_URL, OPENAI_API_KEY и т.д.). Варианты:
+   - **Тестовый бот:** создайте отдельного бота через [@BotFather](https://t.me/BotFather), в Variables у staging подставьте его токен и при необходимости отдельную тестовую БД.
+   - **Та же БД (осторожно):** можно временно указать тот же DATABASE_URL, чтобы не поднимать второй Postgres; тогда тестовые данные будут в общей БД.
+5. Сохраните Variables.
+
+**Шаг 2. Узнать Service ID staging-сервиса**
+
+1. В Railway откройте **staging-сервис** (клик по сервису в проекте).
+2. В адресной строке браузера будет URL вида:  
+   `https://railway.app/project/<PROJECT_ID>/service/<SERVICE_ID>`  
+   либо в интерфейсе: **Settings** → внизу блок **Service** — там указан **Service ID** (UUID, например `a1b2c3d4-e5f6-7890-abcd-ef1234567890`).
+3. Скопируйте этот **Service ID** — он понадобится как значение секрета `RAILWAY_STAGING_SERVICE_ID`.
+
+**Шаг 3. Добавить секреты в GitHub**
+
+1. Откройте репозиторий на GitHub → **Settings** → **Secrets and variables** → **Actions**.
+2. Нажмите **New repository secret**.
+3. Имя: `RAILWAY_STAGING_SERVICE_ID`, значение: вставьте скопированный Service ID staging-сервиса. Сохраните.
+4. (Опционально) Если staging в **другом проекте** Railway: создайте ещё два секрета — `RAILWAY_STAGING_PROJECT_ID` и `RAILWAY_STAGING_ENVIRONMENT_ID`. Их можно взять из URL проекта и окружения в Railway (Settings проекта / окружения).
+5. Для деплоя staging используется тот же **RAILWAY_TOKEN**, что и для прода (уже должен быть в секретах). Если хотите изолировать права — создайте в Railway отдельный Project Token и сохраните его как секрет с тем же именем `RAILWAY_TOKEN` только для этого репозитория (тогда он будет использоваться и для прода, и для staging, если один workflow; либо настройте отдельный токен только для staging через переменные workflow — сложнее).
+
+**Шаг 4. Проверка**
+
+1. Создайте в репозитории ветку, внесите любое изменение, откройте **Pull Request** в `main` (или `master`).
+2. Перейдите на вкладку **Actions**. Должен появиться запуск workflow **Deploy to Staging (Preview)**.
+3. Дождитесь окончания. Если секрет `RAILWAY_STAGING_SERVICE_ID` задан, шаг «Deploy to Railway Staging» задеплоит код из ветки PR в staging-сервис. В Railway у staging-сервиса во вкладке **Deployments** появится новый деплой.
+4. Если секрет не задан, выполнится job **skip-info** с сообщением о том, что staging отключён — это нормально, основной CI (тесты) при этом работает как обычно.
+
+**Важно:** Railway по умолчанию может деплоить сервис из ветки `main` при пуше. Наш workflow при PR пушит образ из ветки PR. Чтобы не было путаницы, убедитесь, что в настройках деплоя staging-сервиса в Railway указан тот же репозиторий; источник кода для «preview» в данном случае управляется GitHub Actions (через `railway up` из ветки PR).
+
+---
+
+### Резервное копирование БД
+
+Рекомендуется настроить бэкапы, чтобы при сбое или случайном удалении БД на Railway можно было восстановить данные.
+
+#### Автоматический бэкап (GitHub Actions)
+
+Workflow **Backup Database** (файл `.github/workflows/backup-db.yml`):
+
+- **Когда запускается:** каждый день в **02:00 UTC** и вручную по кнопке **Run workflow**.
+- **Что делает:** подключается к PostgreSQL по строке `DATABASE_URL`, выполняет `pg_dump` в формате custom (сжатый `.dump`), загружает файл как артефакт GitHub Actions.
+- **Срок хранения артефактов:** 14 дней (потом GitHub удаляет их автоматически).
+
+##### Пошаговая настройка автоматического бэкапа
+
+**Шаг 1. Узнать DATABASE_URL в Railway**
+
+1. Откройте [Railway Dashboard](https://railway.app/dashboard) → ваш проект.
+2. Выберите сервис **PostgreSQL** (не бот, а именно БД).
+3. Откройте вкладку **Variables** (или **Connect**). Там будет переменная **DATABASE_URL** или **DATABASE_PRIVATE_URL** (предпочтительно приватный URL, он не проходит через публичный прокси). Значение выглядит так:  
+   `postgresql://postgres:пароль@hostname.railway.app:5432/railway`
+4. Нажмите **Reveal** (если скрыто) и скопируйте значение целиком. Не публикуйте его и не коммитьте в репозиторий.
+
+**Шаг 2. Добавить секрет в GitHub**
+
+1. Репозиторий на GitHub → **Settings** → **Secrets and variables** → **Actions**.
+2. **New repository secret**.
+3. Имя: **DATABASE_URL**. Значение: вставьте скопированную строку подключения. Сохраните.
+
+**Шаг 3. Проверка (ручной запуск)**
+
+1. Перейдите на вкладку **Actions** в репозитории.
+2. В левом списке выберите workflow **Backup Database**.
+3. Справа нажмите **Run workflow** → **Run workflow**.
+4. Дождитесь завершения (зелёная галочка). Откройте последний run → внизу страницы блок **Artifacts**. Должен появиться артефакт вида `db-backup-YYYYMMDD_HHMMSS`. Нажмите на него, чтобы скачать архив с файлом `.dump`.
+
+Если секрет **DATABASE_URL** не задан, workflow всё равно завершится успешно, но в логе будет сообщение, что бэкап пропущен из‑за отсутствия DATABASE_URL.
+
+**Восстановление из дампа (кратко):**  
+На машине с установленным `pg_restore` и доступом к БД (например, новая БД на Railway):  
+`pg_restore -d "$DATABASE_URL" --no-owner --no-acl db_backup_YYYYMMDD_HHMMSS.dump`  
+(подставьте свой URL и имя файла). Подробности — в [документации PostgreSQL](https://www.postgresql.org/docs/current/app-pgrestore.html).
+
+#### Ручной дамп (локально)
+
+Если нужно сделать разовый дамп со своей машины (например, перед крупным обновлением):
+
+1. Установите клиент PostgreSQL:  
+   - Windows: установка [PostgreSQL](https://www.postgresql.org/download/windows/) или [pg_dump в PATH](https://stackoverflow.com/questions/7046440/how-to-use-pg-dump);  
+   - macOS: `brew install libpq` и при необходимости добавьте в PATH;  
+   - Linux: `sudo apt install postgresql-client` (или аналог).
+2. В терминале перейдите в корень репозитория. Выполните:
+   ```bash
+   export DATABASE_URL='postgresql://...'   # вставьте свою строку из Railway
+   chmod +x scripts/backup_db.sh
+   ./scripts/backup_db.sh
+   ```
+   В текущей папке появится файл `db_backup_YYYYMMDD_HHMMSS.dump`. Храните его в безопасном месте и не коммитьте в Git.
+
+#### Встроенные бэкапы Railway
+
+На платных планах Railway у сервиса PostgreSQL в панели проекта может быть раздел **Backups** (или аналогичный). Там можно включить автоматические снепшоты по расписанию. Это дополняет дампы через GitHub Actions: два независимых способа бэкапа надёжнее.
+
+---
+
+### Аудит зависимостей (pip-audit)
+
+В пайплайне CI добавлена задача **Dependency audit**: при каждом push и PR зависимости из `requirements.txt` проверяются на известные уязвимости (через [pip-audit](https://pypi.org/project/pip-audit/), база PyPI/OSV). Если найдены уязвимости, job **audit** падает, и в логе Actions будет список пакетов и CVE.
+
+**Что делать, если audit упал:**
+
+1. Откройте вкладку **Actions** → выберите упавший workflow → job **Dependency audit** и посмотрите вывод шага «Audit production dependencies»: там будут указаны пакет, версия и идентификатор уязвимости (например, `PYSEC-2024-123` или `GHSA-xxxx`).
+2. Обновите уязвимый пакет до безопасной версии (в выводе pip-audit часто подсказывает «fix available: X.Y.Z»):
+   ```bash
+   pip install --upgrade "имя-пакета>=безопасная-версия"
+   ```
+3. Зафиксируйте новую версию в `requirements.txt` (рекомендуется точное закрепление `пакет==X.Y.Z`).
+4. Запустите локально проверку перед пушем:
+   ```bash
+   pip install pip-audit
+   pip-audit -r requirements.txt
+   ```
+5. Закоммитьте обновлённый `requirements.txt` и запушьте — CI снова пройдёт после устранения уязвимостей.
+
+При необходимости временно игнорировать конкретную уязвимость (например, ложное срабатывание) в CI можно использовать опцию `ignore-vulns` у [pypa/gh-action-pip-audit](https://github.com/pypa/gh-action-pip-audit); делать это стоит только при обоснованной причине.
 
 ---
 

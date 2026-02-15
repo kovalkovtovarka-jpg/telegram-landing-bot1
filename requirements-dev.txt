@@ -5,3 +5,6 @@
 pytest
 pytest-cov
 
+# Lint
+ruff
+

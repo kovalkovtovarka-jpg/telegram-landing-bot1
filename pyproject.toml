@@ -1,0 +1,9 @@
+# Конфигурация для ruff (lint) и общие настройки проекта
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+exclude = ["alembic/versions", ".venv", "venv"]
+
+[tool.ruff.lint]
+# Игнорировать длину строки в CI; при желании можно включить и править код
+extend-ignore = ["E501"]

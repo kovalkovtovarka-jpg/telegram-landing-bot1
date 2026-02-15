@@ -14,9 +14,9 @@ psycopg2-binary==2.9.9  # PostgreSQL driver
 # Environment
 python-dotenv==1.0.0
 
-# HTTP requests (aiohttp 3.13.3: CVE-2025-53643, CVE-2025-69223–69230; httpx/httpcore)
+# HTTP requests (aiohttp 3.13.3: CVE-*; httpx 0.27.2: совместим с openai 1.6.0 — в 0.28 убран proxies)
 aiohttp==3.13.3
-httpx==0.28.1
+httpx==0.27.2
 
 # Utils
 python-dateutil==2.8.2
