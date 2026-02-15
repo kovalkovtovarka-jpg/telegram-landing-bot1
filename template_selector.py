@@ -308,10 +308,15 @@ class TemplateSelector:
         Returns:
             Результат выбора или None
         """
-        keywords = self.logic['quick_selection']['keywords']
+        keywords = self.logic.get('quick_selection', {}).get('keywords', {})
+        if not keywords:
+            return None
         lower_text = text.lower()
-        
+        known_templates = self.templates.get('templates', {})
+
         for template, template_keywords in keywords.items():
+            if template not in known_templates:
+                continue
             if any(keyword in lower_text for keyword in template_keywords):
                 return {
                     'type': 'template',
@@ -319,7 +324,6 @@ class TemplateSelector:
                     'reason': f'Найдено соответствие по ключевым словам',
                     'confidence': 'medium'
                 }
-        
         return None
     
     def get_template_info(self, template_id: str) -> Optional[Dict]:
