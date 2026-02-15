@@ -1,0 +1,52 @@
+# Резервное копирование БД (PostgreSQL)
+# Запускается по расписанию (ежедневно в 02:00 UTC) и вручную (Run workflow).
+#
+# Секрет:
+#   DATABASE_URL — строка подключения к Postgres (например из Railway Variables).
+#   Если не задан — job завершится с предупреждением, без падения.
+
+name: Backup Database
+
+on:
+  schedule:
+    - cron: '0 2 * * *'   # каждый день в 02:00 UTC
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check for DATABASE_URL
+      id: check
+      run: |
+        if [ -z "${{ secrets.DATABASE_URL }}" ]; then
+          echo "skipped=true" >> $GITHUB_OUTPUT
+          echo "::notice::DATABASE_URL not set. Add it in GitHub Secrets to enable DB backups."
+          exit 0
+        fi
+        echo "skipped=false" >> $GITHUB_OUTPUT
+
+    - name: Install PostgreSQL client
+      if: steps.check.outputs.skipped != 'true'
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y postgresql-client
+
+    - name: Create database dump
+      if: steps.check.outputs.skipped != 'true'
+      env:
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      run: |
+        DATE=$(date +%Y%m%d_%H%M%S)
+        echo "DATE=$DATE" >> $GITHUB_ENV
+        pg_dump "$DATABASE_URL" -Fc -f "db_backup_${DATE}.dump"
+        ls -la "db_backup_${DATE}.dump"
+
+    - name: Upload backup artifact
+      if: steps.check.outputs.skipped != 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: db-backup-${{ env.DATE }}
+        path: db_backup_${{ env.DATE }}.dump
+        retention-days: 14
