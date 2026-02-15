@@ -14,8 +14,8 @@ psycopg2-binary==2.9.9  # PostgreSQL driver
 # Environment
 python-dotenv==1.0.0
 
-# HTTP requests (обновлено для устранения известных CVE: aiohttp CVE-2024-52304 и др., httpx/httpcore)
-aiohttp==3.11.10
+# HTTP requests (aiohttp 3.13.3: CVE-2025-53643, CVE-2025-69223–69230; httpx/httpcore)
+aiohttp==3.13.3
 httpx==0.28.1
 
 # Utils
@@ -26,6 +26,7 @@ tenacity==8.2.3  # Retry механизм для LLM API
 urllib3>=2.6.3
 requests>=2.32.2
 certifi>=2024.7.4
+protobuf>=5.29.6
 
 # Testing
 pytest==7.4.3
