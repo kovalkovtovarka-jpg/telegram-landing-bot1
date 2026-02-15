@@ -111,7 +111,7 @@ class DataCollector:
         if field_type == 'number':
             try:
                 float(str(value).replace('BYN', '').strip())
-            except:
+            except Exception:
                 return False, f'Поле {field_id} должно быть числом'
         
         if field_id == 'phone' and isinstance(value, str):
@@ -152,7 +152,7 @@ class DataCollector:
                 new = float(str(formatted['new_price']).replace('BYN', '').strip())
                 discount = int(((old - new) / old) * 100)
                 formatted['discount_percent'] = discount
-            except:
+            except Exception:
                 pass
         
         # Преобразование списков (features, benefits)

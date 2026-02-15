@@ -322,7 +322,7 @@ class LandingBot:
                     # Очищаем некорректное состояние
                     try:
                         self._clear_user_data(int(user_state.user_id))
-                    except:
+                    except Exception:
                         pass
             
             if restored_count > 0:
@@ -719,7 +719,7 @@ class LandingBot:
                 new = float(str(user_data_for_gen['new_price']).replace('BYN', '').replace('RUB', '').replace('USD', '').strip())
                 discount = int(((old - new) / old) * 100)
                 user_data_for_gen['discount_percent'] = discount
-            except:
+            except Exception:
                 user_data_for_gen['discount_percent'] = 35
             
             logger.info(f"Generating with template: {template_id}, data keys: {list(user_data_for_gen.keys())}")
@@ -853,15 +853,13 @@ class LandingBot:
         except Exception as e:
             logger.error(f"Exception in generation for user {user_id}: {str(e)}", exc_info=True)
             try:
-                error_str = str(e).lower()
                 user_friendly_msg = self._format_error_message(str(e))
-                
                 await bot.send_message(
                     chat_id=chat_id,
                     text=user_friendly_msg,
                     reply_markup=self.main_keyboard
                 )
-            except:
+            except Exception:
                 pass
         
         finally:
@@ -878,7 +876,7 @@ class LandingBot:
                 try:
                     shutil.rmtree(photos_dir)
                     logger.info(f"Cleaned up photos dir for user {user_id}")
-                except:
+                except Exception:
                     pass
             
             # Очищаем данные из БД
@@ -1504,7 +1502,7 @@ class LandingBot:
                         self.effective_user = original_update.effective_user
                 
                 import time
-                fake_update = FakeUpdate(update)
+                FakeUpdate(update)  # конструктор для совместимости, результат не используется
                 
                 # Вызываем обработчик генерации напрямую, передавая нужные параметры
                 try:
@@ -1980,8 +1978,6 @@ class LandingBot:
         if user_id not in self.ai_agents:
             await query.edit_message_text("❌ AI-агент не найден.")
             return
-        
-        agent = self.ai_agents[user_id]
         
         try:
             await query.edit_message_text(

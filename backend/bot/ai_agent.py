@@ -270,7 +270,6 @@ class LandingAIAgent:
         hero_files = [f for f in files if f.get('block') == 'hero']
         gallery_files = [f for f in files if f.get('block') == 'gallery']
         description_files = [f for f in files if f.get('block') == 'description']
-        review_files = [f for f in files if f.get('block') == 'review']
         
         # Если нет hero - это hero
         if not hero_files:
