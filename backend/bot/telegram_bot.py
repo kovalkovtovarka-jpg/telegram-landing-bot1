@@ -387,6 +387,7 @@ class LandingBot:
             ],
             per_user=True,
             per_chat=False,
+            per_message=True,
             allow_reentry=True
             # conversation_timeout убран, так как требует JobQueue
             # Таймаут обрабатывается через _cleanup_inactive_ai_agents
@@ -1180,6 +1181,11 @@ class LandingBot:
     
     async def unknown_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Обработка неизвестных команд"""
+        # Если пользователь ввёл /admin — показываем админ-панель (на случай, если основной обработчик не сработал)
+        if update.message and update.message.text:
+            cmd = (update.message.text.split()[0] or "").lstrip("/").split("@")[0].lower()
+            if cmd == "admin":
+                return await self.admin_command(update, context)
         await update.message.reply_text(
             "❓ Неизвестная команда. Используй /help для списка команд."
         )
