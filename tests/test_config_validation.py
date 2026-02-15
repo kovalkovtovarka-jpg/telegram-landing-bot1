@@ -42,3 +42,45 @@ class TestConfigValidate:
             with pytest.raises(ValueError) as exc_info:
                 Config.validate()
             assert "OPENAI_API_KEY" in str(exc_info.value)
+
+    def test_missing_anthropic_key_raises_when_provider_anthropic(self):
+        with patch.object(Config, "TELEGRAM_BOT_TOKEN", "123:abc"), \
+             patch.object(Config, "DATABASE_URL", "sqlite:///test.db"), \
+             patch.object(Config, "ANTHROPIC_API_KEY", ""), \
+             patch.object(Config, "LLM_PROVIDER", "anthropic"):
+            with pytest.raises(ValueError) as exc_info:
+                Config.validate()
+            assert "ANTHROPIC_API_KEY" in str(exc_info.value)
+
+    def test_missing_google_key_raises_when_provider_google(self):
+        with patch.object(Config, "TELEGRAM_BOT_TOKEN", "123:abc"), \
+             patch.object(Config, "DATABASE_URL", "sqlite:///test.db"), \
+             patch.object(Config, "GOOGLE_API_KEY", ""), \
+             patch.object(Config, "LLM_PROVIDER", "google"):
+            with pytest.raises(ValueError) as exc_info:
+                Config.validate()
+            assert "GOOGLE_API_KEY" in str(exc_info.value)
+
+    def test_valid_with_anthropic_key_passes(self):
+        with patch.object(Config, "TELEGRAM_BOT_TOKEN", "123:abc"), \
+             patch.object(Config, "DATABASE_URL", "sqlite:///test.db"), \
+             patch.object(Config, "ANTHROPIC_API_KEY", "sk-ant-test"), \
+             patch.object(Config, "LLM_PROVIDER", "anthropic"):
+            assert Config.validate() is True
+
+    def test_valid_with_google_key_passes(self):
+        with patch.object(Config, "TELEGRAM_BOT_TOKEN", "123:abc"), \
+             patch.object(Config, "DATABASE_URL", "sqlite:///test.db"), \
+             patch.object(Config, "GOOGLE_API_KEY", "AIza-test"), \
+             patch.object(Config, "LLM_PROVIDER", "google"):
+            assert Config.validate() is True
+
+    def test_no_api_key_at_all_raises(self):
+        with patch.object(Config, "TELEGRAM_BOT_TOKEN", "123:abc"), \
+             patch.object(Config, "DATABASE_URL", "sqlite:///test.db"), \
+             patch.object(Config, "OPENAI_API_KEY", ""), \
+             patch.object(Config, "ANTHROPIC_API_KEY", ""), \
+             patch.object(Config, "GOOGLE_API_KEY", ""):
+            with pytest.raises(ValueError) as exc_info:
+                Config.validate()
+            assert "API ключ" in str(exc_info.value) or "OPENAI" in str(exc_info.value) or "LLM" in str(exc_info.value)
