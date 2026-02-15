@@ -25,7 +25,7 @@ class MetricsCollector:
         db = SessionLocal()
         try:
             total_users = db.query(User).count()
-            active_users = db.query(User).filter(User.is_active == True).count()
+            active_users = db.query(User).filter(User.is_active).count()
             
             # Пользователи за последние 24 часа
             yesterday = datetime.utcnow() - timedelta(days=1)
@@ -107,8 +107,8 @@ class MetricsCollector:
         db = SessionLocal()
         try:
             total_generations = db.query(Generation).count()
-            successful_generations = db.query(Generation).filter(Generation.success == True).count()
-            failed_generations = db.query(Generation).filter(Generation.success == False).count()
+            successful_generations = db.query(Generation).filter(Generation.success).count()
+            failed_generations = db.query(Generation).filter(Generation.success.is_(False)).count()
             
             # Генерации за последние 24 часа
             yesterday = datetime.utcnow() - timedelta(days=1)
