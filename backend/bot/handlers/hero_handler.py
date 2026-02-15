@@ -66,7 +66,6 @@ class HeroHandler(BaseHandler):
         format_key = query.data.replace('format_', '')
         
         data = self.get_user_data(user_id)
-        media_type = data.get('hero_media_type')
         
         # Сохраняем формат
         self.update_user_data(user_id, hero_media_format=format_key)
