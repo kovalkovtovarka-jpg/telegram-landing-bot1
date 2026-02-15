@@ -67,7 +67,9 @@ class TestBaseHandlerLog:
         assert "warn message" in caplog.text
 
     def test_log_debug(self, handler, caplog):
-        handler.log("debug", "debug message")
+        import logging
+        with caplog.at_level(logging.DEBUG):
+            handler.log("debug", "debug message")
         assert "debug message" in caplog.text
 
 
