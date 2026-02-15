@@ -290,14 +290,14 @@ class LandingAIAgent:
             # Минимальный сценарий: если пользователь прислал текст как описание товара (длинное сообщение)
             # — считаем первую строку названием, весь текст — описанием
             if len(message.strip()) > 20:
-                lines = [l.strip() for l in message.strip().split('\n') if l.strip()]
+                lines = [line.strip() for line in message.strip().split('\n') if line.strip()]
                 extracted['product_name'] = (lines[0][:100] if lines else 'Товар')
                 extracted['product_description'] = message.strip()
         
         elif stage == 'products':
             # Описание/название: длинное сообщение — первая строка название, весь текст описание
             if len(message.strip()) > 20:
-                lines = [l.strip() for l in message.strip().split('\n') if l.strip()]
+                lines = [line.strip() for line in message.strip().split('\n') if line.strip()]
                 extracted['product_name'] = (lines[0][:100] if lines else 'Товар')
                 extracted['product_description'] = message.strip()
             # Цена (ищем числа с валютой)
@@ -787,9 +787,9 @@ class LandingAIAgent:
             hero_file = next((f for f in files if f.get('block') == 'hero'), files[0] if files else None)
             if hero_file:
                 user_data['hero_media'] = hero_file['path']
-                user_data['hero_media_type'] = 'photo' if hero_file['type'] == 'photo' else 'video'
+                user_data['hero_media_type'] = 'photo' if hero_file.get('type') == 'photo' else 'video'
                 user_data['hero_media_format'] = os.path.splitext(hero_file['path'])[1][1:] or 'jpg'
-                user_data['hero_media_filename'] = hero_file['original_name']
+                user_data['hero_media_filename'] = hero_file.get('original_name') or hero_file.get('filename') or os.path.basename(hero_file['path']) or 'hero.jpg'
 
             middle_video = next((f for f in files if f.get('block') == 'middle_video'), None)
             if middle_video:
