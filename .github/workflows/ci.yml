@@ -28,6 +28,9 @@ jobs:
       with:
         inputs: requirements.txt
         summary: true
+        # protobuf 4.x требуется google-generativeai 0.3.2; CVE-2026-0994 исправлен в 5.29.6 — игнор до миграции на google-genai
+        ignore-vulns: |
+          GHSA-7gcm-g887-7qv7
 
   tests:
     runs-on: ubuntu-latest
