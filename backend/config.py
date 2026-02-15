@@ -35,7 +35,9 @@ class Config:
     
     # Bot Settings
     BOT_ADMIN_IDS = os.getenv('BOT_ADMIN_IDS', '').split(',') if os.getenv('BOT_ADMIN_IDS') else []
-    
+    # Уведомлять админов при старте бота (1/true = да)
+    NOTIFY_ADMINS_ON_STARTUP = os.getenv('NOTIFY_ADMINS_ON_STARTUP', '').lower() in ('1', 'true', 'yes')
+
     # Rate Limiting
     MAX_REQUESTS_PER_HOUR = int(os.getenv('MAX_REQUESTS_PER_HOUR', '10'))
     
