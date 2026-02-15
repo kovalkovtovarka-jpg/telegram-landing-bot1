@@ -2,7 +2,7 @@
 Модуль для сбора метрик и статистики
 """
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from datetime import datetime, timedelta
 from sqlalchemy import func
 from backend.database.database import SessionLocal

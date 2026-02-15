@@ -2,8 +2,6 @@
 Вспомогательные функции
 """
 import os
-import shutil
-from typing import Optional
 
 def ensure_dir(directory: str):
     """Создать директорию если не существует"""
