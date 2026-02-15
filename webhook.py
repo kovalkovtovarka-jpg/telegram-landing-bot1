@@ -3,7 +3,6 @@ Webhook версия бота для продакшн
 Используется вместо polling для более эффективной работы
 """
 import asyncio
-import logging
 import sys
 from aiohttp import web
 from backend.config import Config
