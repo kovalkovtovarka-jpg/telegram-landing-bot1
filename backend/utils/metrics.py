@@ -4,8 +4,9 @@
 import logging
 from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
+from sqlalchemy import func
 from backend.database.database import SessionLocal
-from backend.database.models import User, Project, Generation
+from backend.database.models import User, Project, Generation, UserState
 
 logger = logging.getLogger(__name__)
 
@@ -205,6 +206,32 @@ class MetricsCollector:
         except Exception as e:
             logger.error(f"Error getting user stats: {e}")
             return {'error': str(e)}
+        finally:
+            db.close()
+
+    @staticmethod
+    def get_all_telegram_user_ids() -> list:
+        """
+        Список всех Telegram user_id для рассылки.
+        Берёт из user_states и users (объединение).
+        """
+        db = SessionLocal()
+        try:
+            ids = set()
+            for row in db.query(UserState.user_id).distinct().all():
+                try:
+                    ids.add(int(row[0]))
+                except (ValueError, TypeError):
+                    pass
+            for row in db.query(User.telegram_id).distinct().all():
+                try:
+                    ids.add(int(row[0]))
+                except (ValueError, TypeError):
+                    pass
+            return list(ids)
+        except Exception as e:
+            logger.error(f"Error getting telegram user ids: {e}")
+            return []
         finally:
             db.close()
 
