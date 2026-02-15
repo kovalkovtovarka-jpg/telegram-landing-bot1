@@ -5,6 +5,7 @@ import os
 import tempfile
 import time
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -29,10 +30,11 @@ class TestCleanupOldFiles:
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "old.txt")
             Path(path).write_text("x")
-            # Сделать файл «старым»: изменить время создания (на Windows mtime)
-            old_time = time.time() - (10 * 24 * 60 * 60)
-            os.utime(path, (old_time, old_time))
-            cleanup_old_files(tmp, days_old=7)
+            # На Linux getctime = время изменения метаданных (при utime оно обновляется).
+            # Симулируем «сейчас = через 20 дней», тогда файл с getctime «сейчас» будет считаться старым.
+            fake_now = time.time() + (20 * 24 * 60 * 60)
+            with patch("time.time", return_value=fake_now):
+                cleanup_old_files(tmp, days_old=7)
             assert not os.path.exists(path)
 
     def test_keeps_recent_file(self):
