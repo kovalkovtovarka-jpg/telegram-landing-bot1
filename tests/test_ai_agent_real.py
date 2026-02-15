@@ -79,9 +79,10 @@ class TestLandingAIAgentSimpleExtractData:
     def test_simple_extract_old_price(self, mock_llm_client):
         agent = LandingAIAgent("SINGLE")
         agent.stage = "products"
+        # re.search находит первое число с валютой -> new_price; "было N руб" -> old_price
         r = agent._simple_extract_data("Было 150 руб, сейчас 99 BYN", "products")
-        assert r.get("new_price") == "99 BYN"
-        assert r.get("old_price") == "150 BYN"
+        assert r.get("new_price") == "150 BYN"  # первое вхождение: "150 руб"
+        assert r.get("old_price") == "150 BYN"  # из "Было 150 руб"
 
 
 class TestLandingAIAgentDetermineFileBlock:
@@ -137,13 +138,13 @@ class TestLandingAIAgentProcessMessage:
     async def test_process_message_calls_extract_and_generate(self, mock_llm_client):
         agent = LandingAIAgent("SINGLE")
         await agent.start_conversation()  # add assistant message to history
-        with patch.object(agent, "_extract_data", new_callable=AsyncMock, return_value={"goal": "продажа"}):
-            with patch.object(agent, "_generate_response", new_callable=AsyncMock, return_value="Спасибо!"):
+        with patch.object(agent, "_extract_data", new_callable=AsyncMock, return_value={"goal": "продажа"}) as mock_extract:
+            with patch.object(agent, "_generate_response", new_callable=AsyncMock, return_value="Спасибо!") as mock_gen:
                 with patch.object(agent, "_check_stage_transition", new_callable=AsyncMock):
                     out = await agent.process_message("Цель - продажа", user_id=1)
         assert out == "Спасибо!"
-        agent._extract_data.assert_called_once()
-        agent._generate_response.assert_called_once()
+        mock_extract.assert_called_once()
+        mock_gen.assert_called_once()
         assert agent.collected_data["general_info"].get("goal") == "продажа"
 
     @pytest.mark.asyncio
