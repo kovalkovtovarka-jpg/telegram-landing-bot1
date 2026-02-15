@@ -22,6 +22,8 @@ jobs:
         python-version: '3.11'
         cache: 'pip'
     - run: pip install ruff
+    - name: Ruff fix (автоисправление перед проверкой)
+      run: ruff check backend/ webhook.py main.py scripts/ --fix
     - name: Ruff check
       run: ruff check backend/ webhook.py main.py scripts/
 
