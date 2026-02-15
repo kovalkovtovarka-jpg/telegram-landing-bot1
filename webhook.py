@@ -81,6 +81,11 @@ async def start_webhook():
         # Восстанавливаем AI-агентов из БД
         await bot_instance._restore_ai_agents_from_db()
         
+        # Устанавливаем меню команд (в т.ч. /admin для админов)
+        if hasattr(bot_instance, '_menu_setup_task'):
+            await bot_instance._menu_setup_task()
+            logger.info("✓ Меню команд установлено")
+        
         # Настройка webhook
         # Убираем лишние слеши в конце WEBHOOK_URL
         webhook_base = Config.WEBHOOK_URL.rstrip('/')
