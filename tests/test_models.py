@@ -13,8 +13,10 @@ class TestUser:
         assert "123" in r
         assert "test" in r
 
-    def test_defaults(self):
+    def test_defaults(self, test_db_session):
         u = User(telegram_id="456")
+        test_db_session.add(u)
+        test_db_session.flush()
         assert u.is_active is True
         assert u.username is None
 
@@ -34,8 +36,13 @@ class TestProject:
         assert "t1" in r
         assert "pending" in r or "status" in r
 
-    def test_default_status(self):
-        p = Project(template_id="t", template_name="T", user_id=1, user_data={})
+    def test_default_status(self, test_db_session):
+        user = User(telegram_id="owner", username="u")
+        test_db_session.add(user)
+        test_db_session.flush()
+        p = Project(template_id="t", template_name="T", user_id=user.id, user_data={})
+        test_db_session.add(p)
+        test_db_session.flush()
         assert p.status == "pending"
 
 
@@ -46,8 +53,16 @@ class TestGeneration:
         assert "1" in r
         assert "True" in r or "success" in r
 
-    def test_default_success(self):
-        g = Generation(project_id=1, user_id="u1", prompt="p")
+    def test_default_success(self, test_db_session):
+        user = User(telegram_id="gen_user", username="u")
+        test_db_session.add(user)
+        test_db_session.flush()
+        proj = Project(template_id="t", template_name="T", user_id=user.id, user_data={})
+        test_db_session.add(proj)
+        test_db_session.flush()
+        g = Generation(project_id=proj.id, user_id="u1", prompt="p")
+        test_db_session.add(g)
+        test_db_session.flush()
         assert g.success is False
 
 

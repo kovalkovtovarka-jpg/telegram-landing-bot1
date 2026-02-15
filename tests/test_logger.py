@@ -36,7 +36,8 @@ class TestSecretRedactionFilter:
 
     def test_redacts_in_dict_args(self):
         f = SecretRedactionFilter()
-        record = logging.LogRecord("n", logging.INFO, "", 0, "", {"url": "bot456:abc"}, None)
+        record = logging.LogRecord("n", logging.INFO, "", 0, "", (), None)
+        record.args = {"url": "bot456:abc"}
         result = f.filter(record)
         assert result is True
         assert record.args["url"] == "bot***"
