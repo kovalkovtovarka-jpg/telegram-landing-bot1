@@ -1,6 +1,6 @@
 # CI pipeline:
-# Runs pytest on every push and PR
-# Fails build if tests fail
+# - Tests: pytest on every push and PR
+# - Audit: pip-audit для проверки зависимостей на известные уязвимости (PyPA)
 
 name: CI
 
@@ -11,6 +11,24 @@ on:
     branches: [ main, master, develop ]
 
 jobs:
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Audit production dependencies
+      uses: pypa/gh-action-pip-audit@v1.1.0
+      with:
+        inputs: requirements.txt
+        summary: true
+
   tests:
     runs-on: ubuntu-latest
     
