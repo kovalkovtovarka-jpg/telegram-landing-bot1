@@ -1,5 +1,6 @@
 # CI pipeline:
-# - Tests: pytest on every push and PR
+# - Lint: ruff (стиль и базовые проверки)
+# - Tests: pytest на каждый push и PR
 # - Audit: pip-audit для проверки зависимостей на известные уязвимости (PyPA)
 
 name: CI
@@ -11,6 +12,19 @@ on:
     branches: [ main, master, develop ]
 
 jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+    - run: pip install ruff
+    - name: Ruff check
+      run: ruff check backend/ webhook.py main.py scripts/
+
   audit:
     name: Dependency audit
     runs-on: ubuntu-latest
