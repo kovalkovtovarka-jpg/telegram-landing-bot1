@@ -1,9 +1,7 @@
 """
 Новый промпт-билдер для структуры из 17 пунктов (для товарщиков)
 """
-from typing import Dict, Any, Tuple
-import json
-import re
+from typing import Dict, Any
 
 class NewPromptBuilder:
     """Промпт-билдер для новой структуры лендинга из 17 пунктов"""

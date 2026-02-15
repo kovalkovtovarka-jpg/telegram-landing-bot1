@@ -5,7 +5,7 @@ import os
 import json
 import shutil
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from backend.generator.llm_client import LLMClient
 from backend.generator.prompt_builder import PromptBuilder
 from backend.generator.template_loader import TemplateLoader
