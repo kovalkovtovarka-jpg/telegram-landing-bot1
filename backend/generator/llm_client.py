@@ -359,7 +359,7 @@ class LLMClient:
                 )
                 return True
             elif self.provider == 'anthropic':
-                message = self.client.messages.create(
+                self.client.messages.create(
                     model=self.model,
                     max_tokens=10,
                     messages=[{"role": "user", "content": "test"}]
@@ -367,7 +367,7 @@ class LLMClient:
                 return True
             elif self.provider == 'google':
                 model = self.client.GenerativeModel(model_name=self.model)
-                response = model.generate_content("test")
+                model.generate_content("test")
                 return True
             return False
         except Exception as e:

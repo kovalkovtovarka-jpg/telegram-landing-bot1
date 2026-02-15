@@ -147,7 +147,6 @@ class NewPromptBuilder:
             Готовый промпт для LLM
         """
         # Извлекаем все данные
-        landing_type = user_data.get('landing_type', 'single_product')
         product_name = user_data.get('product_name', 'Товар')
         description_text = user_data.get('description_text', '')
         
@@ -157,7 +156,6 @@ class NewPromptBuilder:
         suggested_fonts = style_suggestion['fonts']
         suggested_style = style_suggestion['style']
         
-        hero_media = user_data.get('hero_media')
         hero_media_filename = user_data.get('hero_media_filename')  # Оригинальное имя файла
         hero_media_type = user_data.get('hero_media_type', 'photo')
         hero_media_format = user_data.get('hero_media_format', 'jpeg')
