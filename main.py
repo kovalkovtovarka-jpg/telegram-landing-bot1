@@ -82,6 +82,13 @@ async def main():
 
     except Exception as e:
         logger.error(f"Критическая ошибка: {e}", exc_info=True)
+        if bot is not None:
+            try:
+                await bot.notify_admins(
+                    f"🚨 Критическая ошибка при запуске бота (polling):\n{str(e)[:500]}"
+                )
+            except Exception:
+                pass
         sys.exit(1)
 
 

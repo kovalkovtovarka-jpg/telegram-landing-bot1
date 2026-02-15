@@ -126,7 +126,11 @@ async def start_webhook():
         
         logger.info(f"✓ Webhook сервер запущен на порту {Config.WEBHOOK_PORT}")
         logger.info(f"✓ Health check: http://0.0.0.0:{Config.WEBHOOK_PORT}/health")
-        
+        if Config.NOTIFY_ADMINS_ON_STARTUP:
+            from datetime import datetime
+            await bot_instance.notify_admins(
+                f"✅ Бот запущен (webhook)\n{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} UTC"
+            )
         # Бесконечное ожидание
         try:
             await asyncio.Event().wait()
@@ -146,6 +150,13 @@ async def start_webhook():
     
     except Exception as e:
         logger.error(f"Критическая ошибка: {e}", exc_info=True)
+        if bot_instance is not None:
+            try:
+                await bot_instance.notify_admins(
+                    f"🚨 Критическая ошибка при запуске webhook:\n{str(e)[:500]}"
+                )
+            except Exception:
+                pass
         sys.exit(1)
 
 if __name__ == '__main__':
