@@ -84,3 +84,23 @@ class TestConfigValidate:
             with pytest.raises(ValueError) as exc_info:
                 Config.validate()
             assert "API ключ" in str(exc_info.value) or "OPENAI" in str(exc_info.value) or "LLM" in str(exc_info.value)
+
+
+class TestConfigAttributes:
+    """Тесты атрибутов Config (значения по умолчанию и парсинг)."""
+
+    def test_bot_admin_ids_parsed_as_list(self):
+        with patch.object(Config, "BOT_ADMIN_IDS", ["123", "456"]):
+            assert Config.BOT_ADMIN_IDS == ["123", "456"]
+
+    def test_notify_admins_on_startup_true(self):
+        with patch.object(Config, "NOTIFY_ADMINS_ON_STARTUP", True):
+            assert Config.NOTIFY_ADMINS_ON_STARTUP is True
+
+    def test_max_file_size_int(self):
+        with patch.object(Config, "MAX_FILE_SIZE", 10485760):
+            assert Config.MAX_FILE_SIZE == 10485760
+
+    def test_max_requests_per_hour_int(self):
+        with patch.object(Config, "MAX_REQUESTS_PER_HOUR", 10):
+            assert Config.MAX_REQUESTS_PER_HOUR == 10
