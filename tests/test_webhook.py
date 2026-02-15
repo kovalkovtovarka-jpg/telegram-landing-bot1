@@ -43,9 +43,9 @@ class TestHandleWebhook:
 
 
 class TestStartWebhook:
-    async def test_start_webhook_raises_when_no_webhook_url(self, webhook_module):
+    async def test_start_webhook_exits_when_no_webhook_url(self, webhook_module):
         with patch.object(webhook_module.Config, "validate", return_value=True), \
-             patch.object(webhook_module.Config, "WEBHOOK_URL", ""):
-            with pytest.raises(ValueError) as exc_info:
-                await webhook_module.start_webhook()
-            assert "WEBHOOK_URL" in str(exc_info.value)
+             patch.object(webhook_module.Config, "WEBHOOK_URL", ""), \
+             patch("webhook.sys.exit") as mock_exit:
+            await webhook_module.start_webhook()
+            mock_exit.assert_called_once_with(1)
