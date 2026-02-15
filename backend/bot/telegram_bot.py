@@ -1720,17 +1720,17 @@ class LandingBot:
                 )
                 return
             
-            # Скачиваем файл
-            file = await self.app.bot.get_file(file_obj.file_id)
-            file_path = os.path.join(Config.FILES_DIR, f'temp_{user_id}_{file_obj.file_unique_id}')
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
-            
-            await file.download_to_drive(file_path)
-            
-            # Добавляем информацию о файле
+            # Добавляем расширение к пути ДО скачивания, чтобы файл сохранялся с расширением
+            # (иначе генератор не находит файл при копировании в проект)
             ext = 'jpg' if file_type == 'photo' else (getattr(file_obj, 'mime_type', '') or 'mp4').split('/')[-1]
             if ext not in ('jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'mov', 'webm'):
                 ext = 'jpg' if file_type == 'photo' else 'mp4'
+            file_path = os.path.join(Config.FILES_DIR, f'temp_{user_id}_{file_obj.file_unique_id}.{ext}')
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+            file = await self.app.bot.get_file(file_obj.file_id)
+            await file.download_to_drive(file_path)
+
             file_info = {
                 'path': file_path,
                 'type': file_type,

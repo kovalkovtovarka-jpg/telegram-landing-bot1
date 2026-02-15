@@ -13,113 +13,36 @@ logger = logging.getLogger(__name__)
 class LandingAIAgent:
     """ИИ агент для сбора данных через диалог"""
     
-    SYSTEM_PROMPT = """Ты — профессиональный AI-ассистент по созданию продающих лендингов.
+    SYSTEM_PROMPT = """Ты — ассистент по созданию продающих лендингов. Диалог компактный, но структурированный.
 
-Твоя задача — в формате диалога собрать всю информацию для генерации сайта и подготовить структурированный промпт для нейросети кодинга (gpt-4o).
+=== ПОРЯДОК СБОРА ===
 
-=== ОСНОВНЫЕ ЗАДАЧИ ===
+<b>Шаг 1. Главное фото + описание</b>
+Попроси прислать ПЕРВЫМ то фото, которое клиент хочет видеть главным (в самом верху лендинга и ещё раз перед формой заявки). И описание товара (название + текст, можно с Wildberries).
+По этому фото и описанию автоматически подбираются стиль, цвета и шрифты — не спрашивай про стиль/цвета.
 
-1. Вести естественный, дружелюбный и профессиональный диалог.
-2. Режим работы уже определен: {mode} (не спрашивай об этом).
-3. В зависимости от режима собирать данные корректно.
-4. Уметь работать с файлами: фото и видео.
-5. Запоминать ответы пользователя и не задавать повторные вопросы.
-6. Задавать вопросы блоками по 1–3 связанных пункта.
-7. Не перегружать пользователя.
-8. Когда данные собраны — сформировать финальный промпт для генерации сайта.
+<b>Шаг 2. Остальные фото</b>
+Когда есть главное фото и описание — попроси прислать остальные фото для лендинга. Бот видит их количество. После этого переходи к мини-опросу.
 
-=== ЭТАП 2. ОБЩАЯ ИНФОРМАЦИЯ (ДЛЯ ЛЮБОГО РЕЖИМА) ===
+<b>Шаг 3. Мини-опрос</b> (задай компактно, можно одним сообщением или двумя)
+- Скидка: есть ли скидка и какой процент/текст (например: 30% или «−30%»).
+- Цены: старая (до скидки) и новая (со скидкой), например 150 BYN и 99 BYN.
+- Подвал сайта: ИП или ООО — название (ФИО для ИП / название компании для ООО), УНП, адрес, телефон, email, при необходимости время работы.
+- Заявки из формы: куда отправлять — в Telegram (нужны токен бота и id чата) или на email (указать адрес).
+- Распределение фото: кроме главного (hero), какие блоки заполнять — описание, галерея, отзывы. Например: «2 фото в описание, 3 в галерею, 2 в отзывы» или «все в галерею».
+- Видео: нужен ли на лендинге блок с видео? Если да — попроси прислать видео потом.
 
-Собери:
-- Цель сайта (продажа / заявки / каталог)
-- Целевая аудитория
-- Стиль и настроение (минимал, премиум, яркий, строгий и т.д.)
-- Предпочтительные цвета (спроси: «Есть ли предпочтительные цвета для лендинга? Например: синий, зелёный, нейтральные. Если нет — подберу по стилю товара.»)
-- Язык сайта
-- Примеры сайтов (если есть)
-- Куда отправлять заявки (email / telegram / форма)
-- Контактные данные
+Не растягивай: объединяй вопросы в блоки, не задавай по одному.
 
-=== ЭТАП 3. СБОР ТОВАРОВ ===
-
---- ЕСЛИ MODE = SINGLE ---
-
-Собери:
-- Название товара
-- Краткое описание
-- Основная боль клиента
-- Как товар решает эту проблему
-- Цена (старая / новая, если есть)
-- УТП
-- Характеристики
-- Фото / видео
-- Отзывы
-- Гарантии
-- Доставка и оплата
-- Призыв к действию
-
---- ЕСЛИ MODE = MULTI ---
-
-1. Спроси количество товаров.
-2. Для каждого товара создавай отдельный диалоговый блок.
-3. Для каждого товара собирай:
-   - Название
-   - Описание
-   - Цена
-   - Фото / видео
-   - Особенности
-   - Для кого подходит
-   - Призыв к действию
-
-Дополнительно собери:
-- Нужна ли главная страница-каталог
-- Меню и навигация
-- Фильтры или категории
-
-=== ЭТАП 4. ПРОВЕРКА ===
-
-Перед переходом к сводке и кнопкам «Да, генерировать» ОБЯЗАТЕЛЬНО:
-- Убедись, что пользователь отправил хотя бы одно фото товара для главного изображения лендинга.
-- Если фото ещё не было — явно попроси: «Отправьте, пожалуйста, хотя бы одно фото товара для лендинга (оно будет главным изображением на странице).» Не переходи к сводке без фото.
-
-Перед генерацией:
-- Проверь, хватает ли данных.
-- Если чего-то нет — вежливо уточни.
-- Не задавай повторные вопросы.
-
-=== ЭТАП 5. ГЕНЕРАЦИЯ ===
-
-Когда всё собрано:
-1. Кратко покажи сводку.
-2. Спроси подтверждение.
-3. После подтверждения сформируй структурированный промпт для gpt-4o, включающий:
-   - Тип сайта
-   - Стиль
-   - Страницы
-   - Контент
-   - Файлы
-   - CTA
-   - Логику формы заявок
-   - Адаптивность
-   - Анимации
-   - SEO базу
-
-Формат финального промпта — технический, структурированный, без воды.
-
-=== ПРАВИЛА РАБОТЫ С ФАЙЛАМИ ===
-
-Когда пользователь отправляет фото или видео:
-- Подтверди получение файла
-- Уточни, для какого блока предназначен файл (hero, галерея, описание, отзыв)
-- Сохрани информацию о файле для использования в промпте
+=== ФАЙЛЫ ===
+- Первое присланное фото = главное (hero), оно же внизу перед формой.
+- Остальные фото распределяются по блокам (описание / галерея / отзывы) по ответу клиента в мини-опросе.
+- Если клиент пришлёт видео — использовать в блоке «видео».
 
 === ТЕКУЩЕЕ СОСТОЯНИЕ ===
-
 Режим: {mode}
 Этап: {stage}
-Собранные данные: {collected_summary}
-
-Помни: не задавай вопросы, на которые уже есть ответы в собранных данных."""
+Собранные данные: {collected_summary}"""
     
     def __init__(self, mode: str):
         """
@@ -149,33 +72,17 @@ class LandingAIAgent:
     
     async def start_conversation(self) -> str:
         """
-        Начать диалог с пользователем
-        
-        Returns:
-            Приветственное сообщение
+        Начать диалог: сначала главное фото + описание, потом остальные фото, затем мини-опрос.
         """
-        mode_text = "лендинг для одного товара" if self.mode == 'SINGLE' else "многостраничный сайт для нескольких товаров"
-        
-        greeting = f"""Привет! Я помогу создать продающий {mode_text}.
-
-📋 <b>Этап 1/4: Общая информация</b>
-
-Начнем с общей информации о вашем проекте:
-
-1. Какова цель сайта? (продажа товара / сбор заявок / каталог)
-2. Кто ваша целевая аудитория?
-3. Какой стиль вам нравится? (минималистичный, премиум, яркий, строгий)
-
-Можете ответить на все вопросы сразу или по одному.
-
-💡 <i>Используйте /cancel_ai чтобы отменить создание</i>"""
-        
-        # Добавляем системное сообщение в историю
-        self.conversation_history.append({
-            'role': 'assistant',
-            'content': greeting
-        })
-        
+        mode_text = "лендинг для одного товара" if self.mode == 'SINGLE' else "сайт для нескольких товаров"
+        greeting = (
+            f"Привет! Создам продающий {mode_text}.\n\n"
+            "📷 <b>Шаг 1.</b> Отправьте <b>главное фото</b> товара — то, что хотите видеть в самом верху лендинга "
+            "и перед формой заявки. И пришлите <b>описание</b> (название + текст, можно с Wildberries).\n\n"
+            "По ним подберу стиль, цвета и шрифты. Дальше попрошу остальные фото и несколько коротких вопросов.\n\n"
+            "💡 /cancel_ai — отменить"
+        )
+        self.conversation_history.append({'role': 'assistant', 'content': greeting})
         return greeting
     
     async def process_message(self, message: str, user_id: int, files: List[Dict] = None) -> str:
@@ -261,13 +168,11 @@ class LandingAIAgent:
     def _determine_file_block(self, file_type: str) -> str:
         """Определить, для какого блока предназначен файл"""
         files = self.collected_data.get('files', [])
-        
-        # Если это первый файл и мы на этапе products - скорее всего hero
-        if self.stage == 'products' and len(files) == 0:
-            return 'hero'
-        
-        # Если уже есть hero файл - определяем по типу и количеству
         hero_files = [f for f in files if f.get('block') == 'hero']
+
+        # Первый файл всегда hero (минимальный сценарий: фото + описание)
+        if len(files) == 0:
+            return 'hero'
         gallery_files = [f for f in files if f.get('block') == 'gallery']
         description_files = [f for f in files if f.get('block') == 'description']
         
@@ -372,19 +277,44 @@ class LandingAIAgent:
                 extracted['notification_type'] = 'email'
             elif 'telegram' in message_lower or 'телеграм' in message_lower:
                 extracted['notification_type'] = 'telegram'
+
+            # Скидка в hero (процент или текст)
+            import re
+            discount_match = re.search(r'скидк[аи]\s*[:\s]*(\d+)\s*%?|(\d+)\s*%\s*скидк', message_lower)
+            if discount_match:
+                pct = discount_match.group(1) or discount_match.group(2)
+                if pct:
+                    extracted['hero_discount'] = f'-{pct}%'
+                    extracted['hero_discount_position'] = 'top_right'
+
+            # Минимальный сценарий: если пользователь прислал текст как описание товара (длинное сообщение)
+            # — считаем первую строку названием, весь текст — описанием
+            if len(message.strip()) > 20:
+                lines = [l.strip() for l in message.strip().split('\n') if l.strip()]
+                extracted['product_name'] = (lines[0][:100] if lines else 'Товар')
+                extracted['product_description'] = message.strip()
         
         elif stage == 'products':
+            # Описание/название: длинное сообщение — первая строка название, весь текст описание
+            if len(message.strip()) > 20:
+                lines = [l.strip() for l in message.strip().split('\n') if l.strip()]
+                extracted['product_name'] = (lines[0][:100] if lines else 'Товар')
+                extracted['product_description'] = message.strip()
             # Цена (ищем числа с валютой)
             import re
             price_match = re.search(r'(\d+)\s*(?:BYN|руб|₽|\$|€)', message, re.IGNORECASE)
             if price_match:
                 extracted['new_price'] = f"{price_match.group(1)} BYN"
-            
-            # Старая цена
             old_price_match = re.search(r'(?:было|старая|ранее|раньше)[:\s]+(\d+)\s*(?:BYN|руб|₽)', message, re.IGNORECASE)
             if old_price_match:
                 extracted['old_price'] = f"{old_price_match.group(1)} BYN"
-        
+            # Скидка
+            discount_match = re.search(r'скидк[аи]\s*[:\s]*(\d+)\s*%?|(\d+)\s*%\s*скидк', message_lower, re.IGNORECASE)
+            if discount_match:
+                pct = discount_match.group(1) or discount_match.group(2)
+                if pct:
+                    extracted['hero_discount'] = f'-{pct}%'
+                    extracted['hero_discount_position'] = 'top_right'
         return extracted
     
     async def _llm_extract_data(self, message: str, stage: str) -> Dict[str, Any]:
@@ -402,25 +332,19 @@ class LandingAIAgent:
 Извлеки только те данные, которые явно указаны в сообщении. Верни JSON с извлеченными данными.
 
 Для этапа general_info извлекай:
-- goal (цель сайта: продажа/заявки/каталог)
-- target_audience (целевая аудитория)
-- style (стиль: минималистичный/премиум/яркий/строгий)
-- language (язык: ru/en)
+- goal, target_audience, style, language
 - notification_type (email/telegram)
-- contact_info (контакты)
+- notification_email (если заявки на почту)
+- notification_telegram_token, notification_telegram_chat_id (если заявки в Telegram)
+- footer: type (ip/ooo), fio (для ИП), company_name (для ООО), unp, address, phone, email, schedule
+- hero_discount (текст скидки, например "-30%"), hero_discount_position (top_right)
+- photo_description_count, photo_gallery_count, photo_reviews_count (числа: сколько фото в блок описание, галерея, отзывы)
+- want_video (true/false — нужен ли блок с видео)
 
 Для этапа products (SINGLE) извлекай:
-- product_name
-- product_description
-- customer_pain
-- solution
-- old_price
-- new_price
-- utp
-- characteristics (массив)
-- guarantees
-- delivery_payment
-- cta
+- product_name, product_description, old_price, new_price
+- hero_discount, hero_discount_position
+- characteristics (массив), utp, guarantees, delivery_payment, cta
 
 Для этапа products (MULTI) извлекай:
 - products_count (количество товаров)
@@ -457,14 +381,31 @@ class LandingAIAgent:
         logger.info(f"Updating collected data for stage {self.stage}: {list(extracted_data.keys())}")
         
         if self.stage == 'general_info':
-            self.collected_data['general_info'].update(extracted_data)
-            logger.info(f"General info after update: {list(self.collected_data['general_info'].keys())}")
-        elif self.stage == 'products':
-            if self.mode == 'SINGLE':
-                # Для одного товара обновляем первый продукт
+            self.collected_data['general_info'].update(
+                {k: v for k, v in extracted_data.items() if k not in ('product_name', 'product_description')}
+            )
+            # Минимальный сценарий: описание из первого сообщения — сразу в товар (SINGLE)
+            if self.mode == 'SINGLE' and (extracted_data.get('product_name') or extracted_data.get('product_description')):
                 if not self.collected_data['products']:
                     self.collected_data['products'].append({})
-                self.collected_data['products'][0].update(extracted_data)
+                self.collected_data['products'][0].update({
+                    k: v for k, v in extracted_data.items()
+                    if k in ('product_name', 'product_description')
+                })
+            logger.info(f"General info after update: {list(self.collected_data['general_info'].keys())}")
+        elif self.stage == 'products':
+            # Поля подвала и уведомлений из мини-опроса могли прийти вместе с ценами — кладём в general_info
+            footer_keys = {'notification_type', 'notification_email', 'notification_telegram_token', 'notification_telegram_chat_id',
+                           'type', 'fio', 'company_name', 'unp', 'address', 'phone', 'email', 'schedule',
+                           'photo_description_count', 'photo_gallery_count', 'photo_reviews_count', 'want_video'}
+            general_from_extract = {k: v for k, v in extracted_data.items() if k in footer_keys}
+            if general_from_extract:
+                self.collected_data['general_info'].update(general_from_extract)
+            if self.mode == 'SINGLE':
+                if not self.collected_data['products']:
+                    self.collected_data['products'].append({})
+                product_extract = {k: v for k, v in extracted_data.items() if k not in footer_keys}
+                self.collected_data['products'][0].update(product_extract)
             else:
                 # Для нескольких товаров
                 if 'products_count' in extracted_data:
@@ -790,7 +731,21 @@ class LandingAIAgent:
         general = self.collected_data['general_info']
         user_data['design_style'] = general.get('style', 'vibrant')
         user_data['notification_type'] = general.get('notification_type', 'telegram')
+        user_data['notification_email'] = general.get('notification_email', '')
+        user_data['notification_telegram_token'] = general.get('notification_telegram_token', '')
+        user_data['notification_telegram_chat_id'] = general.get('notification_telegram_chat_id', '')
         user_data['preferred_colors'] = general.get('preferred_colors', '')
+        # Подвал (ИП/ООО)
+        user_data['footer_info'] = {
+            'type': general.get('type', 'ip'),
+            'fio': general.get('fio', ''),
+            'company_name': general.get('company_name', ''),
+            'unp': general.get('unp', ''),
+            'address': general.get('address', ''),
+            'phone': general.get('phone', ''),
+            'email': general.get('email', ''),
+            'schedule': general.get('schedule', ''),
+        }
         
         # Товары
         if self.mode == 'SINGLE':
@@ -801,6 +756,15 @@ class LandingAIAgent:
                 user_data['new_price'] = product.get('new_price', '')
                 user_data['old_price'] = product.get('old_price', '')
                 user_data['characteristics'] = product.get('characteristics', [])
+                user_data['hero_discount'] = product.get('hero_discount') or general.get('hero_discount', '')
+                user_data['hero_discount_position'] = product.get('hero_discount_position') or general.get('hero_discount_position', 'top_right')
+                # Определяем текст с Wildberries — в промпте уберём воду и усилим маркетинг
+                desc = user_data.get('description_text', '') or ''
+                try:
+                    from backend.utils.text_processor import TextProcessor
+                    user_data['description_is_wildberries'] = TextProcessor.is_wildberries_text(desc)
+                except Exception:
+                    user_data['description_is_wildberries'] = False
             else:
                 # Если товар не собран, используем значения по умолчанию
                 import logging
@@ -811,33 +775,61 @@ class LandingAIAgent:
                 user_data['new_price'] = '99'
                 user_data['old_price'] = ''
                 user_data['characteristics'] = []
-        
-        # Файлы
+                user_data['description_is_wildberries'] = False
+                user_data['hero_discount'] = ''
+                user_data['hero_discount_position'] = 'top_right'
+        else:
+            user_data['description_is_wildberries'] = False
+
+        # Файлы: первое = hero, остальные распределяем по блокам (описание, галерея, отзывы)
         files = self.collected_data['files']
         if files:
-            # Hero медиа (первый файл или файл с block='hero')
             hero_file = next((f for f in files if f.get('block') == 'hero'), files[0] if files else None)
             if hero_file:
                 user_data['hero_media'] = hero_file['path']
                 user_data['hero_media_type'] = 'photo' if hero_file['type'] == 'photo' else 'video'
                 user_data['hero_media_format'] = os.path.splitext(hero_file['path'])[1][1:] or 'jpg'
                 user_data['hero_media_filename'] = hero_file['original_name']
-            
-            # Среднее видео
+
             middle_video = next((f for f in files if f.get('block') == 'middle_video'), None)
             if middle_video:
                 user_data['middle_video'] = middle_video['path']
-            
-            # Галерея
-            gallery_files = [f for f in files if f.get('block') == 'gallery']
-            if gallery_files:
-                user_data['middle_gallery'] = [f['path'] for f in gallery_files]
-            
-            # Фото описания
-            description_files = [f for f in files if f.get('block') == 'description']
-            if description_files:
-                user_data['description_photos'] = [f['path'] for f in description_files]
-        
+
+            # Распределение остальных фото по блокам из мини-опроса (если заданы счётчики)
+            desc_count = general.get('photo_description_count')
+            gallery_count = general.get('photo_gallery_count')
+            reviews_count = general.get('photo_reviews_count')
+            non_hero = [f for f in files if f.get('block') != 'hero' and f.get('type') == 'photo']
+            if desc_count is not None or gallery_count is not None or reviews_count is not None:
+                try:
+                    d = int(desc_count) if desc_count is not None else 0
+                    g = int(gallery_count) if gallery_count is not None else 0
+                    r = int(reviews_count) if reviews_count is not None else 0
+                    idx = 0
+                    if d > 0 and idx + d <= len(non_hero):
+                        user_data['description_photos'] = [f['path'] for f in non_hero[idx:idx + d]]
+                        idx += d
+                    if g > 0 and idx + g <= len(non_hero):
+                        user_data['middle_gallery'] = [f['path'] for f in non_hero[idx:idx + g]]
+                        idx += g
+                    if r > 0 and idx + r <= len(non_hero):
+                        user_data['reviews'] = [{'photo': f['path'], 'name': '', 'text': ''} for f in non_hero[idx:idx + r]]
+                except (TypeError, ValueError):
+                    pass
+            # Если счётчики не заданы — используем текущее распределение по block
+            if 'description_photos' not in user_data:
+                description_files = [f for f in files if f.get('block') == 'description']
+                if description_files:
+                    user_data['description_photos'] = [f['path'] for f in description_files]
+            if 'middle_gallery' not in user_data:
+                gallery_files = [f for f in files if f.get('block') == 'gallery']
+                if gallery_files:
+                    user_data['middle_gallery'] = [f['path'] for f in gallery_files]
+            if 'reviews' not in user_data:
+                review_files = [f for f in files if f.get('block') == 'review']
+                if review_files:
+                    user_data['reviews'] = [{'photo': f['path'], 'name': '', 'text': ''} for f in review_files]
+
         return user_data
     
     def validate_data(self) -> List[str]:
