@@ -143,12 +143,12 @@ class TestScenarioConvertToUserData:
         }
         agent.collected_data["products"] = [{"product_name": "Товар", "product_description": "Описание"}]
         agent.collected_data["files"] = [
-            {"path": "/tmp/h.jpg", "type": "photo", "block": "hero"},
-            {"path": "/tmp/1.jpg", "type": "photo", "block": "gallery"},
-            {"path": "/tmp/2.jpg", "type": "photo", "block": "gallery"},
-            {"path": "/tmp/3.jpg", "type": "photo", "block": "gallery"},
-            {"path": "/tmp/4.jpg", "type": "photo", "block": "gallery"},
-            {"path": "/tmp/5.jpg", "type": "photo", "block": "gallery"},
+            {"path": "/tmp/h.jpg", "type": "photo", "block": "hero", "original_name": "hero.jpg"},
+            {"path": "/tmp/1.jpg", "type": "photo", "block": "gallery", "original_name": "1.jpg"},
+            {"path": "/tmp/2.jpg", "type": "photo", "block": "gallery", "original_name": "2.jpg"},
+            {"path": "/tmp/3.jpg", "type": "photo", "block": "gallery", "original_name": "3.jpg"},
+            {"path": "/tmp/4.jpg", "type": "photo", "block": "gallery", "original_name": "4.jpg"},
+            {"path": "/tmp/5.jpg", "type": "photo", "block": "gallery", "original_name": "5.jpg"},
         ]
         user_data = agent.convert_to_user_data()
         assert user_data["hero_media"] == "/tmp/h.jpg"
@@ -162,10 +162,10 @@ class TestScenarioConvertToUserData:
         agent.collected_data["general_info"] = {}
         agent.collected_data["products"] = [{"product_name": "Товар", "product_description": "Описание"}]
         agent.collected_data["files"] = [
-            {"path": "/tmp/hero.jpg", "type": "photo", "block": "hero"},
-            {"path": "/tmp/desc1.jpg", "type": "photo", "block": "description"},
-            {"path": "/tmp/gal1.jpg", "type": "photo", "block": "gallery"},
-            {"path": "/tmp/rev1.jpg", "type": "photo", "block": "review"},
+            {"path": "/tmp/hero.jpg", "type": "photo", "block": "hero", "original_name": "hero.jpg"},
+            {"path": "/tmp/desc1.jpg", "type": "photo", "block": "description", "original_name": "desc1.jpg"},
+            {"path": "/tmp/gal1.jpg", "type": "photo", "block": "gallery", "original_name": "gal1.jpg"},
+            {"path": "/tmp/rev1.jpg", "type": "photo", "block": "review", "original_name": "rev1.jpg"},
         ]
         user_data = agent.convert_to_user_data()
         assert user_data["hero_media"] == "/tmp/hero.jpg"
