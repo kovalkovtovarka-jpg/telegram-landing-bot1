@@ -214,16 +214,14 @@ class LandingAIAgent:
         
         # Проверяем, все ли обязательные поля собраны для текущего этапа
         if stage == 'general_info':
-            required_fields = ['goal', 'target_audience', 'style']
+            # Минимальный сценарий: goal, target_audience, style не обязательны — не вызываем LLM для их извлечения
             general_info = self.collected_data.get('general_info', {})
-            # Проверяем, какие обязательные поля еще не собраны
-            missing_required = [field for field in required_fields if field not in general_info and field not in extracted]
-            # Если есть не собранные обязательные поля, используем LLM
+            required_fields = []  # раньше ['goal', 'target_audience', 'style']
+            missing_required = [f for f in required_fields if f not in general_info and f not in extracted]
             if missing_required:
                 logger.info(f"Missing required fields for general_info: {missing_required}, using LLM extraction")
                 llm_extracted = await self._llm_extract_data(message, stage)
                 if llm_extracted:
-                    # Объединяем результаты простого парсинга и LLM
                     extracted.update(llm_extracted)
         elif stage == 'products' and self.mode == 'SINGLE':
             # Для товаров проверяем обязательные поля
@@ -572,33 +570,36 @@ class LandingAIAgent:
     async def _check_stage_transition(self):
         """Проверить, нужно ли перейти к следующему этапу"""
         if self.stage == 'general_info':
-            # Проверяем, собрана ли общая информация
-            required_fields = ['goal', 'target_audience', 'style']
             general_info = self.collected_data.get('general_info', {})
-            collected_fields = [field for field in required_fields if field in general_info]
-            missing_fields = [field for field in required_fields if field not in general_info]
-            
-            logger.info(f"Stage transition check (general_info): required={required_fields}, collected={collected_fields}, missing={missing_fields}")
-            logger.info(f"General info keys: {list(general_info.keys())}")
-            
-            if all(field in general_info for field in required_fields):
+            files = self.collected_data.get('files', [])
+            products = self.collected_data.get('products', [])
+            has_product_info = bool(
+                products and (
+                    products[0].get('product_name') or products[0].get('product_description')
+                )
+            )
+            has_photo = len(files) >= 1
+            # Минимальный сценарий: переход при наличии главного фото и описания (без goal/audience/style)
+            if has_photo and has_product_info:
                 self.stage = 'products'
                 self.collected_data['stage'] = 'products'
-                logger.info("Transitioned to products stage")
+                logger.info("Transitioned to products stage (minimal: photo + description)")
+            elif all(general_info.get(f) for f in ('goal', 'target_audience', 'style')):
+                self.stage = 'products'
+                self.collected_data['stage'] = 'products'
+                logger.info("Transitioned to products stage (full general_info)")
             else:
-                logger.info(f"Not transitioning: missing fields {missing_fields}")
+                logger.info(f"Stage transition (general_info): has_photo={has_photo}, has_product_info={has_product_info}, general keys={list(general_info.keys())}")
         
         elif self.stage == 'products':
-            # Проверяем, собраны ли данные о товарах
             if self.mode == 'SINGLE':
-                required_fields = ['product_name', 'product_description', 'new_price']
-                if self.collected_data['products'] and all(
-                    field in self.collected_data['products'][0] 
-                    for field in required_fields
-                ):
+                # Минимальный сценарий: для перехода в verification достаточно названия и описания (цену можно в мини-опросе)
+                product = (self.collected_data['products'] or [{}])[0]
+                has_name_desc = bool(product.get('product_name') and product.get('product_description'))
+                if self.collected_data['products'] and has_name_desc:
                     self.stage = 'verification'
                     self.collected_data['stage'] = 'verification'
-                    logger.info("Transitioned to verification stage")
+                    logger.info("Transitioned to verification stage (product name + description)")
             else:  # MULTI
                 # Проверяем, что все товары собраны
                 if (self.collected_data.get('products_count') and 
@@ -626,26 +627,16 @@ class LandingAIAgent:
             (полнота, список недостающих полей)
         """
         missing = []
-        
-        # Проверяем общую информацию
-        required_general = ['goal', 'target_audience', 'style']
-        # notification_type не обязателен - используем значение по умолчанию
-        for field in required_general:
-            if field not in self.collected_data['general_info']:
-                missing.append(f"Общая информация: {field}")
-        
-        # Если notification_type не указан, используем значение по умолчанию
+        # notification_type по умолчанию
         if 'notification_type' not in self.collected_data['general_info']:
             self.collected_data['general_info']['notification_type'] = 'telegram'
-        
-        # Для лендинга одного товара обязательно хотя бы одно фото для главного изображения
+
+        # Минимальный сценарий: goal, target_audience, style не обязательны (подставляются по умолчанию)
+        # Обязательны: фото и описание товара
         if self.mode == 'SINGLE':
             if not self.collected_data.get('files'):
                 missing.append("Фото товара для лендинга (хотя бы одно изображение)")
-        
-        # Проверяем товары
-        if self.mode == 'SINGLE':
-            required_product = ['product_name', 'product_description', 'new_price']
+            required_product = ['product_name', 'product_description']
             if not self.collected_data['products']:
                 missing.append("Товар: все поля")
             else:

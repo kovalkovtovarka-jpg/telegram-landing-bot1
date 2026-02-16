@@ -4,6 +4,7 @@ Telegram бот для генерации лендингов
 import asyncio
 import logging
 import os
+import warnings
 import re
 import shutil
 from typing import Dict, Any, Optional
@@ -357,6 +358,8 @@ class LandingBot:
         # Команда отмены AI-режима
         self.app.add_handler(CommandHandler("cancel_ai", self.cancel_ai_command))
         
+        # Подавляем предупреждение PTB: при per_message=False CallbackQueryHandler не привязан к сообщению (приемлемо для нашего flow)
+        warnings.filterwarnings("ignore", message=".*per_message.*CallbackQueryHandler.*", category=UserWarning)
         # ConversationHandler для AI-агента (группа 1 - приоритет)
         ai_agent_handler = ConversationHandler(
             entry_points=[
