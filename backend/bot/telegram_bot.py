@@ -386,8 +386,8 @@ class LandingBot:
                 CommandHandler("cancel_ai", self.cancel_ai_command)
             ],
             per_user=True,
-            per_chat=False,
-            per_message=True,
+            per_chat=True,
+            per_message=False,
             allow_reentry=True
             # conversation_timeout убран, так как требует JobQueue
             # Таймаут обрабатывается через _cleanup_inactive_ai_agents
