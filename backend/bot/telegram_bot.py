@@ -1369,8 +1369,8 @@ class LandingBot:
                 parse_mode='Markdown'
             )
             
-            # Запускаем AI-ассистента сразу (оплата будет добавлена позже)
-            result = await self.start_ai_agent(user_id, mode, query.message.chat.id, context)
+            # Запускаем AI-ассистента заново (пользователь явно выбрал режим — не восстанавливать старый диалог)
+            result = await self.start_ai_agent(user_id, mode, query.message.chat.id, context, force_new=True)
             
             # Возвращаем состояние для ConversationHandler
             if result == AI_CONVERSATION:
@@ -1385,16 +1385,16 @@ class LandingBot:
             )
             return ConversationHandler.END
     
-    async def start_ai_agent(self, user_id: int, mode: str, chat_id: int, context: ContextTypes.DEFAULT_TYPE = None):
-        """Запуск AI-ассистента"""
+    async def start_ai_agent(self, user_id: int, mode: str, chat_id: int, context: ContextTypes.DEFAULT_TYPE = None, force_new: bool = False):
+        """Запуск AI-ассистента. Если force_new=True (выбор режима из меню), всегда создаём нового агента и показываем приветствие."""
         try:
             from backend.bot.ai_agent import LandingAIAgent
             
-            logger.info(f"Starting AI agent for user {user_id} with mode {mode}")
+            logger.info(f"Starting AI agent for user {user_id} with mode {mode} (force_new={force_new})")
             
-            # Проверяем, есть ли сохраненное состояние в БД
+            # Восстанавливаем из БД только если не явный старт с выбором режима
             user_data = self._get_user_data(user_id)
-            if 'ai_agent_state' in user_data and user_data.get('ai_agent_active'):
+            if not force_new and 'ai_agent_state' in user_data and user_data.get('ai_agent_active'):
                 try:
                     # Восстанавливаем агента из сохраненного состояния
                     agent = LandingAIAgent.from_serialized_state(user_data['ai_agent_state'])
