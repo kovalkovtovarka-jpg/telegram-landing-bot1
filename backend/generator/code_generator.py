@@ -56,9 +56,11 @@ class CodeGenerator:
             if not template_info and not user_data.get('landing_type'):
                 raise ValueError(f"Шаблон {template_id} не найден")
             
-            # Проверяем кэш промптов
+            # Проверяем кэш промптов (для AI-собранных данных с фото не кэшируем — всегда свежий промпт)
             from backend.utils.cache import prompt_cache
-            prompt = prompt_cache.get(user_data)
+            prompt = None
+            if not user_data.get('hero_media'):
+                prompt = prompt_cache.get(user_data)
             
             if not prompt:
                 # Сжимаем данные пользователя для оптимизации промпта
@@ -73,8 +75,9 @@ class CodeGenerator:
                 if was_compressed:
                     logger.warning("Prompt was compressed due to length")
                 
-                # Сохраняем в кэш
-                prompt_cache.set(user_data, prompt)
+                # Сохраняем в кэш только если это не AI-собранные данные (без hero_media)
+                if not user_data.get('hero_media'):
+                    prompt_cache.set(user_data, prompt)
             else:
                 logger.info("Using cached prompt")
             
@@ -740,7 +743,7 @@ echo "Ошибка: уведомления не настроены";
     def _create_base_html(self, user_data: Dict[str, Any]) -> str:
         """Создание базового HTML с данными пользователя"""
         product_name = user_data.get('product_name', 'Товар')
-        product_description = user_data.get('product_description', 'Описание товара')
+        product_description = user_data.get('description_text') or user_data.get('product_description', 'Описание товара')
         old_price = user_data.get('old_price', '152 BYN')
         new_price = user_data.get('new_price', '99 BYN')
         benefits = user_data.get('benefits', [])
@@ -778,28 +781,54 @@ echo "Ошибка: уведомления не настроены";
         else:
             benefits_html = f'                <li><span class="check-icon">✓</span>{benefits}</li>'
         
-        # Карусель изображений
+        # Карусель изображений (новая структура: hero + gallery; старая: photos)
         photos_html = ''
-        photos = user_data.get('photos', [])
-        if photos:
-            photos_html += '                <div class="carousel-container">\n'
-            photos_html += '                    <div class="carousel-wrapper">\n'
-            photos_html += '                        <div class="carousel-track" id="imageCarousel">\n'
-            for i, photo_path in enumerate(photos):
-                photo_name = f'photo_{i+1}.jpg'
-                photos_html += f'                            <div class="carousel-slide"><img src="img/{photo_name}" alt="{product_name}" class="product-image"></div>\n'
-            photos_html += '                        </div>\n'
-            photos_html += '                        <button class="carousel-btn carousel-btn-prev" id="prevBtn" aria-label="Предыдущее фото">‹</button>\n'
-            photos_html += '                        <button class="carousel-btn carousel-btn-next" id="nextBtn" aria-label="Следующее фото">›</button>\n'
-            photos_html += '                    </div>\n'
-            photos_html += '                    <div class="carousel-dots" id="carouselDots"></div>\n'
-            photos_html += '                </div>\n'
+        if user_data.get('landing_type'):
+            hero_ext = (user_data.get('hero_media_format') or 'jpg').lower()
+            if hero_ext == 'jpeg':
+                hero_ext = 'jpg'
+            hero_src = f'img/hero.{hero_ext}'
+            gallery = user_data.get('middle_gallery', []) or []
+            slides = [hero_src] + [f'img/gallery_{i+1}.jpg' for i in range(len(gallery))]
+            if slides:
+                photos_html += '                <div class="carousel-container">\n'
+                photos_html += '                    <div class="carousel-wrapper">\n'
+                photos_html += '                        <div class="carousel-track" id="imageCarousel">\n'
+                for src in slides:
+                    photos_html += f'                            <div class="carousel-slide"><img src="{src}" alt="{product_name}" class="product-image"></div>\n'
+                photos_html += '                        </div>\n'
+                photos_html += '                        <button class="carousel-btn carousel-btn-prev" id="prevBtn" aria-label="Предыдущее фото">‹</button>\n'
+                photos_html += '                        <button class="carousel-btn carousel-btn-next" id="nextBtn" aria-label="Следующее фото">›</button>\n'
+                photos_html += '                    </div>\n'
+                photos_html += '                    <div class="carousel-dots" id="carouselDots"></div>\n'
+                photos_html += '                </div>\n'
+            else:
+                photos_html = f'                <div class="carousel-container">\n'
+                photos_html += f'                    <div class="carousel-wrapper">\n'
+                photos_html += f'                        <div class="carousel-track"><div class="carousel-slide"><img src="img/hero.jpg" alt="{product_name}" class="product-image"></div></div>\n'
+                photos_html += '                    </div>\n'
+                photos_html += '                </div>\n'
         else:
-            photos_html = f'                <div class="carousel-container">\n'
-            photos_html += f'                    <div class="carousel-wrapper">\n'
-            photos_html += f'                        <div class="carousel-track"><div class="carousel-slide"><img src="img/photo_1.jpg" alt="{product_name}" class="product-image"></div></div>\n'
-            photos_html += '                    </div>\n'
-            photos_html += '                </div>\n'
+            photos = user_data.get('photos', [])
+            if photos:
+                photos_html += '                <div class="carousel-container">\n'
+                photos_html += '                    <div class="carousel-wrapper">\n'
+                photos_html += '                        <div class="carousel-track" id="imageCarousel">\n'
+                for i, photo_path in enumerate(photos):
+                    photo_name = f'photo_{i+1}.jpg'
+                    photos_html += f'                            <div class="carousel-slide"><img src="img/{photo_name}" alt="{product_name}" class="product-image"></div>\n'
+                photos_html += '                        </div>\n'
+                photos_html += '                        <button class="carousel-btn carousel-btn-prev" id="prevBtn" aria-label="Предыдущее фото">‹</button>\n'
+                photos_html += '                        <button class="carousel-btn carousel-btn-next" id="nextBtn" aria-label="Следующее фото">›</button>\n'
+                photos_html += '                    </div>\n'
+                photos_html += '                    <div class="carousel-dots" id="carouselDots"></div>\n'
+                photos_html += '                </div>\n'
+            else:
+                photos_html = f'                <div class="carousel-container">\n'
+                photos_html += f'                    <div class="carousel-wrapper">\n'
+                photos_html += f'                        <div class="carousel-track"><div class="carousel-slide"><img src="img/photo_1.jpg" alt="{product_name}" class="product-image"></div></div>\n'
+                photos_html += '                    </div>\n'
+                photos_html += '                </div>\n'
         
         # Карусель отзывов
         reviews_html = ''
@@ -3822,11 +3851,26 @@ document.addEventListener('DOMContentLoaded', function() {
         
         logger.info(f"Starting media copy to {img_dir}, new_structure={is_new_structure}")
         
+        def _resolve_path(path: str) -> str:
+            """Привести путь к абсолютному (для относительных — от cwd или FILES_DIR)."""
+            if not path or not isinstance(path, str):
+                return path
+            if os.path.isabs(path):
+                return path
+            abs_path = os.path.abspath(path)
+            if os.path.exists(abs_path):
+                return abs_path
+            alt = os.path.abspath(os.path.join(Config.FILES_DIR, path))
+            if os.path.exists(alt):
+                return alt
+            return abs_path
+
         if is_new_structure:
             # Новая структура - копируем все медиа файлы
             # Hero медиа (фото или видео)
             hero_media = user_data.get('hero_media')
             if hero_media:
+                hero_media = _resolve_path(hero_media)
                 if isinstance(hero_media, str) and os.path.exists(hero_media):
                     hero_ext = os.path.splitext(hero_media)[1] or '.jpg'
                     dest_path = get_safe_path(f'hero{hero_ext}', img_dir)
@@ -3842,6 +3886,7 @@ document.addEventListener('DOMContentLoaded', function() {
             # Среднее видео
             middle_video = user_data.get('middle_video')
             if middle_video:
+                middle_video = _resolve_path(middle_video)
                 if isinstance(middle_video, str) and os.path.exists(middle_video):
                     video_ext = os.path.splitext(middle_video)[1] or '.mp4'
                     dest_path = get_safe_path(f'middle{video_ext}', img_dir)
@@ -3864,6 +3909,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     else:
                         photo_path = photo_item
                     
+                    photo_path = _resolve_path(photo_path) if isinstance(photo_path, str) else photo_path
                     if isinstance(photo_path, str) and os.path.exists(photo_path):
                         photo_ext = os.path.splitext(photo_path)[1] or '.jpg'
                         dest_path = get_safe_path(f'gallery_{i+1}{photo_ext}', img_dir)
@@ -3886,6 +3932,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     else:
                         photo_path = photo_item
                     
+                    photo_path = _resolve_path(photo_path) if isinstance(photo_path, str) else photo_path
                     if isinstance(photo_path, str) and os.path.exists(photo_path):
                         photo_ext = os.path.splitext(photo_path)[1] or '.jpg'
                         dest_path = get_safe_path(f'description_{i+1}{photo_ext}', img_dir)
@@ -3907,6 +3954,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     else:
                         photo_path = None
                     
+                    photo_path = _resolve_path(photo_path) if photo_path and isinstance(photo_path, str) else photo_path
                     if photo_path and isinstance(photo_path, str) and os.path.exists(photo_path):
                         photo_ext = os.path.splitext(photo_path)[1] or '.jpg'
                         dest_path = get_safe_path(f'review_{i+1}{photo_ext}', img_dir)
