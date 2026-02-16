@@ -744,6 +744,7 @@ class LandingAIAgent:
                 product = self.collected_data['products'][0]
                 user_data['product_name'] = product.get('product_name', 'Товар')
                 user_data['description_text'] = product.get('product_description', '')
+                user_data['product_description'] = product.get('product_description', '')
                 user_data['new_price'] = product.get('new_price', '')
                 user_data['old_price'] = product.get('old_price', '')
                 user_data['characteristics'] = product.get('characteristics', [])
@@ -763,6 +764,7 @@ class LandingAIAgent:
                 logger.warning("Products not collected, using default values")
                 user_data['product_name'] = 'Товар'
                 user_data['description_text'] = 'Описание товара'
+                user_data['product_description'] = 'Описание товара'
                 user_data['new_price'] = '99'
                 user_data['old_price'] = ''
                 user_data['characteristics'] = []
