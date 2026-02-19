@@ -17,7 +17,7 @@ class TestNewPromptBuilder:
         result = builder._analyze_product_and_suggest_style("Ортопедическая подушка", "для сна")
         assert result["category"] == "health"
         assert "primary" in result["colors"]
-        assert result["colors"]["primary"] == "#4f46e5"
+        assert result["colors"]["primary"] == "#5b7c99"
         assert len(result["fonts"]) == 2
         assert result["fonts"][0] == "Inter"
 
