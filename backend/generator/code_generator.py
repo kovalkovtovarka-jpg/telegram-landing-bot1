@@ -111,7 +111,6 @@ class CodeGenerator:
             logger.debug(f"Prompt preview (first 2000 chars):\n{prompt[:2000]}")
             
             # Сохраняем полный промпт в файл для отладки
-            import os
             from datetime import datetime
             prompts_dir = os.path.join(Config.FILES_DIR, 'prompts')
             os.makedirs(prompts_dir, exist_ok=True)
