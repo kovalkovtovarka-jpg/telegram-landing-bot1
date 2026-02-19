@@ -56,6 +56,27 @@ class CodeGenerator:
             if not template_info and not user_data.get('landing_type'):
                 raise ValueError(f"Шаблон {template_id} не найден")
             
+            # Проверяем, был ли уже выполнен vision-анализ при получении hero-фото (в диалоге)
+            # Если нет - выполняем сейчас (fallback для старых данных или если анализ не сработал)
+            if 'vision_style_suggestion' not in user_data:
+                hero_media = user_data.get('hero_media')
+                if hero_media and os.path.exists(hero_media):
+                    try:
+                        logger.info(f"Vision analysis not found in user_data, analyzing hero image now: {hero_media}")
+                        product_name = user_data.get('product_name', '')
+                        description = user_data.get('description_text', '')
+                        vision_result = await self.llm_client.analyze_image_style(hero_media, product_name, description)
+                        
+                        if vision_result and 'colors' in vision_result and 'fonts' in vision_result:
+                            user_data['vision_style_suggestion'] = vision_result
+                            logger.info(f"✓ Vision analysis successful: primary={vision_result['colors'].get('primary')}, fonts={vision_result['fonts']}")
+                        else:
+                            logger.info("Vision analysis returned no valid result, will use text-based analysis")
+                    except Exception as e:
+                        logger.warning(f"Vision analysis failed: {e}, falling back to text-based style", exc_info=True)
+            else:
+                logger.info("Using vision analysis result from dialog (already completed)")
+            
             # Проверяем кэш промптов (для AI-собранных данных с фото не кэшируем — всегда свежий промпт)
             from backend.utils.cache import prompt_cache
             prompt = None
@@ -66,6 +87,10 @@ class CodeGenerator:
                 # Сжимаем данные пользователя для оптимизации промпта
                 from backend.utils.prompt_compressor import PromptCompressor
                 compressed_data = PromptCompressor.compress_user_data(user_data)
+                
+                # Сохраняем vision_style_suggestion в compressed_data (если есть)
+                if 'vision_style_suggestion' in user_data:
+                    compressed_data['vision_style_suggestion'] = user_data['vision_style_suggestion']
                 
                 # Строим промпт, если нет в кэше
                 prompt = self.prompt_builder.build_prompt(template_id, compressed_data)
@@ -161,13 +186,16 @@ class CodeGenerator:
                 if not css_has_recommended_colors:
                     logger.warning(f"CSS не содержит рекомендуемый цвет {recommended_primary}. CSS snippet: {css[:500]}")
             
-            # Более строгая проверка CSS
-            css_is_valid = (css_has_styles and css_has_colors and css_has_variables and css_lines >= 300)
+            # Проверка достаточности CSS: полнота и содержание, без жёсткого лимита строк
+            css_is_valid = (
+                css_has_styles and css_has_colors and css_has_variables
+                and css_lines >= 30  # минимальная разумная длина, без искусственного раздувания
+            )
             
             if not validation_result['valid'] or len(html) < 200 or len(css) < 100 or len(js) < 50 or not css_is_valid:
                 logger.warning(f"LLM вернул неполный код или CSS недостаточно детальный. HTML={len(html)}, CSS={len(css)} ({css_lines} lines), valid={css_is_valid}")
                 if not css_is_valid:
-                    logger.warning(f"CSS не соответствует требованиям: lines={css_lines} (min 300), has_styles={css_has_styles}, has_colors={css_has_colors}, has_variables={css_has_variables}. Используем fallback-шаблон.")
+                    logger.warning(f"CSS не соответствует требованиям: lines={css_lines}, has_styles={css_has_styles}, has_colors={css_has_colors}, has_variables={css_has_variables}. Используем fallback-шаблон.")
                 generated_code = self._create_fallback_code(template_id, user_data)
                 validation_result = self.validator.validate(generated_code)
             elif not css_has_recommended_colors and user_data.get('landing_type'):

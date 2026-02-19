@@ -8,6 +8,8 @@ import json
 import re
 import logging
 import asyncio
+import base64
+import os
 from backend.config import Config
 
 logger = logging.getLogger(__name__)
@@ -380,44 +382,28 @@ class LLMClient:
 ТВОЯ ЗАДАЧА: Создать ПОЛНЫЙ, РАБОТАЮЩИЙ лендинг с HTML, CSS и JavaScript.
 
 ⚠️ КРИТИЧЕСКИ ВАЖНО:
-- Используй ВСЕ данные из промпта пользователя
-- НЕ используй заглушки - только реальные данные
-- CSS должен быть ПОЛНЫМ (минимум 500 строк) с ВСЕМИ стилями
-- ОБЯЗАТЕЛЬНО используй РЕКОМЕНДУЕМЫЕ цвета и шрифты из промпта!
-- Все цвета должны быть ЯРКИМИ и ВИДИМЫМИ (не прозрачные, не бесцветные!)
-- Все шрифты должны быть подключены через Google Fonts
-- Формы должны использовать ВСЕ собранные данные (размеры, цвета, характеристики)
+- Используй ВСЕ данные из промпта пользователя; НЕ используй заглушки — только реальные данные.
+- HTML: полный (complete), готовый к использованию (production-ready), с чёткой структурой (fully structured). Все блоки из промпта — в указанном порядке.
+- CSS: полный и рабочий — все секции оформлены, без пустых блоков. Недопустимо: пустой файл, только комментарии.
+- JS: весь описанный функционал реализован (таймер, телефон, карусели, валидация).
+- ОБЯЗАТЕЛЬНО используй РЕКОМЕНДУЕМЫЕ цвета и шрифты из промпта; цвета яркие и видимые; шрифты через Google Fonts.
+- Формы: ВСЕ собранные поля (размеры, цвета, характеристики), action="send.php".
 
 ═══════════════════════════════════════════════════════════════
-ТРЕБОВАНИЯ К HTML (ОБЯЗАТЕЛЬНО):
+ТРЕБОВАНИЯ К HTML:
 ═══════════════════════════════════════════════════════════════
 
-1. СТРУКТУРА ДОКУМЕНТА (полная):
-   <!DOCTYPE html>
-   <html lang="ru">
-   <head>
-     <meta charset="UTF-8">
-     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     <title>[НАЗВАНИЕ ТОВАРА ИЗ ПРОМПТА - ИСПОЛЬЗУЙ ТОЧНО!]</title>
-     <link rel="stylesheet" href="css/style.css">
-   </head>
-   <body>
-     [ВСЕ СЕКЦИИ ЛЕНДИНГА]
-     <script src="js/script.js"></script>
-   </body>
-   </html>
+1. СТРУКТУРА: полный документ от <!DOCTYPE html> до </html>, title = название товара из промпта, link на css/style.css, script на js/script.js.
 
-2. ОБЯЗАТЕЛЬНЫЕ СЕКЦИИ:
-   - Hero-секция с главным изображением/видео и ценой
-   - Название товара (ИСПОЛЬЗУЙ ТОЧНО из промпта!)
-   - 3 яркие характеристики (ИСПОЛЬЗУЙ ТОЧНО из промпта!)
-   - Таймер обратного отсчета (если включен)
-   - Цены (старая зачеркнута, новая выделена)
-   - Форма заказа с ВСЕМИ полями из промпта (размеры, цвета, характеристики)
-   - Описание товара
-   - Отзывы (если указаны)
-   - Подвал с данными клиента (ИСПОЛЬЗУЙ ТОЧНО из промпта!)
-   - Футер
+2. ПОРЯДОК БЛОКОВ (как в промпте):
+   - Hero: первый кадр (фото/несколько при разных цветах), скидка/акция, короткое описание, форма заказа
+   - При наличии видео: блок видео сразу под hero, автозапуск при попадании в viewport
+   - Описание товара (абзацы, при необходимости фото)
+   - Средняя форма заказа (дубликат формы из hero)
+   - При наличии фото: галерея-карусель (минимум 2 фото, 3:4)
+   - Отзывы (под товар, с фото или без; фото 3:4)
+   - Дубль hero (фото + форма)
+   - Подвал: ИП/ООО, УНП, адрес, время работы, email
 
 3. ФОРМЫ:
    - Все формы должны иметь action="send.php" method="POST"
@@ -439,77 +425,20 @@ class LLMClient:
    - ФОТОГРАФИИ: используй пути из промпта (img/photo_1.jpg, img/photo_2.jpg и т.д.)
 
 ═══════════════════════════════════════════════════════════════
-ТРЕБОВАНИЯ К CSS (ОБЯЗАТЕЛЬНО):
+ТРЕБОВАНИЯ К CSS:
 ═══════════════════════════════════════════════════════════════
 
-1. МИНИМУМ 400+ СТРОК КОДА (ОБЯЗАТЕЛЬНО!):
-   ⚠️ КРИТИЧЕСКИ ВАЖНО: CSS ДОЛЖЕН БЫТЬ ПОЛНЫМ С ВСЕМИ СТИЛЯМИ!
-   
-   ОБЯЗАТЕЛЬНО ВКЛЮЧИ:
-   - CSS переменные для цветов (:root {{ --primary-color: #ff6b9d; --secondary-color: #c084fc; --dark-bg: #0a0e27; ... }})
-   - Reset стили (* {{ margin: 0; padding: 0; box-sizing: border-box; }})
-   - Базовые стили для body, html (фон, шрифты, цвета)
-   - Темный фон с градиентами (linear-gradient)
-   - Стили для ВСЕХ секций (hero, характеристики, таймер, форма, отзывы, подвал)
-   - Яркие цвета для акцентов (primary-color, secondary-color)
-   - Стили для форм (поля ввода, селекторы, радиокнопки, кнопки)
-   - Стили для кнопок (gradient backgrounds, hover effects)
-   - Стили для цен (старая зачеркнута, новая выделена крупным шрифтом)
-   - Стили для таймера (крупный шрифт, яркий цвет, эффект свечения)
-   - Стили для каруселей (кнопки навигации, индикаторы)
-   - Адаптивный дизайн (mobile-first с @media queries)
-   - Плавные переходы и анимации (transition, transform, animation)
+CSS должен быть полным и рабочим (complete, production-ready). Все секции оформлены; пустые блоки не допускаются.
 
-2. АДАПТИВНОСТЬ:
-   - Mobile-first подход
-   - @media (min-width: 768px) для планшетов
-   - @media (min-width: 1024px) для десктопов
-
-3. АНИМАЦИИ:
-   - Плавные переходы (transition: all 0.3s ease)
-   - Анимации при наведении (hover: transform, box-shadow)
-   - Анимации при скролле (fade-in, slide-in)
-
-4. НЕ ДОПУСКАЙ:
-   - Пустой CSS файл
-   - Только комментарии без кода
-   - Меньше 400 строк
-   - Отсутствие цветов и стилей
-   - Отсутствие стилей для форм
+Включи: CSS переменные (:root с --primary-color, --secondary-color, --dark-bg и т.д.), reset, стили body/html, темный фон с градиентами, стили для hero, цен, таймера, формы, отзывов, подвала, каруселей; адаптив (mobile-first, @media); переходы и анимации. Недопустимо: пустой файл, только комментарии, отсутствие стилей для форм и секций.
 
 ═══════════════════════════════════════════════════════════════
-ТРЕБОВАНИЯ К JAVASCRIPT (ОБЯЗАТЕЛЬНО):
+ТРЕБОВАНИЯ К JAVASCRIPT:
 ═══════════════════════════════════════════════════════════════
 
-1. МИНИМУМ 150+ СТРОК КОДА:
-   - Таймер обратного отсчета (24 часа, обнуляется в 00:00)
-   - Форматирование телефона +375 (__) ___-__-__
-   - Валидация форм
-   - Карусели (галерея, отзывы) с правильным центрированием
-   - Плавные анимации при скролле
-   - Обработка отправки форм
+JS должен быть полным и рабочим: весь описанный в промпте функционал реализован.
 
-2. ТАЙМЕР:
-   - Обратный отсчет 24 часа
-   - Обнуляется каждый день в 00:00
-   - Формат: ЧЧ:ММ:СС
-   - Обновление каждую секунду
-
-3. ФОРМАТИРОВАНИЕ ТЕЛЕФОНА:
-   - Маска: +375 (__) ___-__-__
-   - Автоматическое форматирование при вводе
-   - Валидация формата
-
-4. КАРУСЕЛИ:
-   - Плавная прокрутка
-   - Правильное центрирование активного элемента
-   - Кнопки навигации (prev/next)
-   - Автоматическая прокрутка (опционально)
-
-5. НЕ ДОПУСКАЙ:
-   - Пустой JS файл
-   - Только комментарии без кода
-   - Меньше 50 строк
+Включи: таймер обратного отсчёта (формат ЧЧ:ММ:СС, обновление каждую секунду), форматирование телефона +375 (__) ___-__-__ и валидацию, карусели (плавная прокрутка, кнопки prev/next, автопрокрутка), валидацию форм, анимации при скролле. Недопустимо: пустой файл, только комментарии.
 
 ═══════════════════════════════════════════════════════════════
 ФОРМАТ ОТВЕТА (КРИТИЧЕСКИ ВАЖНО):
@@ -524,17 +453,261 @@ class LLMClient:
 }
 
 ВАЖНО:
-- JSON должен быть валидным (экранируй кавычки и переносы строк)
-- HTML должен быть ПОЛНЫМ документом (от <!DOCTYPE> до </html>)
-- CSS должен быть ПОЛНЫМ файлом (минимум 500 строк) с ВСЕМИ стилями
-- CSS ОБЯЗАТЕЛЬНО должен содержать:
-  * CSS переменные (:root с --primary-color, --secondary-color и т.д.)
-  * Яркие цвета и градиенты (linear-gradient)
-  * Темный фон с градиентами
-  * Подключенные шрифты через Google Fonts
-  * Стили для ВСЕХ элементов (hero, цены, таймер, форма, отзывы, подвал)
-  * Адаптивный дизайн (@media queries)
-- JS должен быть ПОЛНЫМ файлом (минимум 200 строк)
-- Используй РЕАЛЬНЫЕ данные из промпта, НЕ заглушки
-- ОБЯЗАТЕЛЬНО используй РЕКОМЕНДУЕМЫЕ цвета и шрифты из промпта!
-- Все пути к файлам: css/style.css, js/script.js, img/photo_X.jpg"""
+- JSON валидный (экранируй кавычки и переносы строк).
+- HTML: полный документ (от <!DOCTYPE> до </html>), все блоки в порядке из промпта.
+- CSS: полный и рабочий — переменные, градиенты, стили для всех секций, адаптив, Google Fonts. Без пустых блоков.
+- JS: полный и рабочий — таймер, телефон, карусели, валидация.
+- Только РЕАЛЬНЫЕ данные из промпта, РЕКОМЕНДУЕМЫЕ цвета и шрифты. Пути: css/style.css, js/script.js, img/..."""
+    
+    async def analyze_image_style(self, image_path: str, product_name: str = '', description: str = '') -> Dict[str, Any]:
+        """
+        Анализ изображения товара через Vision API для получения цветов, стиля и шрифтов
+        
+        Args:
+            image_path: Путь к изображению товара
+            product_name: Название товара (для контекста)
+            description: Описание товара (для контекста)
+            
+        Returns:
+            Словарь с цветами, шрифтами и стилем на основе изображения
+        """
+        if not self.client:
+            raise ValueError(f"{self.provider.upper()} API ключ не установлен или клиент не инициализирован")
+        
+        if not os.path.exists(image_path):
+            logger.warning(f"Image file not found: {image_path}, falling back to text-based analysis")
+            return None
+        
+        # Проверяем размер файла (лимиты для vision API)
+        file_size = os.path.getsize(image_path)
+        max_size = 20 * 1024 * 1024  # 20MB для большинства vision API
+        
+        if file_size > max_size:
+            logger.warning(f"Image file too large ({file_size / 1024 / 1024:.1f}MB), falling back to text-based analysis")
+            return None
+        
+        try:
+            # Читаем изображение
+            with open(image_path, 'rb') as image_file:
+                image_data = image_file.read()
+                image_base64 = base64.b64encode(image_data).decode('utf-8')
+            
+            # Формируем промпт для анализа
+            analysis_prompt = f"""Проанализируй это изображение товара{" " + product_name if product_name else ""} и предложи:
+1. Цветовую палитру для лендинга (5 цветов в hex формате):
+   - primary (основной акцентный цвет, должен быть ярким и привлекательным)
+   - secondary (вторичный акцент)
+   - accent (дополнительный акцент)
+   - bg_dark (темный фон)
+   - bg_darker (еще более темный фон для контраста)
+   
+2. Стиль дизайна (modern/elegant/minimalist/bold/playful)
+3. Пару шрифтов (названия из Google Fonts, например: "Montserrat", "Inter")
+
+Ответ в формате JSON:
+{{
+  "colors": {{
+    "primary": "#hex",
+    "secondary": "#hex",
+    "accent": "#hex",
+    "bg_dark": "#hex",
+    "bg_darker": "#hex"
+  }},
+  "fonts": ["FontName1", "FontName2"],
+  "style": "modern|elegant|minimalist|bold|playful",
+  "category": "health|beauty|tech|fashion|home|sports|food|general"
+}}"""
+            
+            if self.provider == 'openai':
+                return await self._analyze_image_openai(image_base64, analysis_prompt, image_path)
+            elif self.provider == 'anthropic':
+                return await self._analyze_image_anthropic(image_path, analysis_prompt)
+            elif self.provider == 'google':
+                return await self._analyze_image_google(image_path, analysis_prompt)
+            else:
+                logger.warning(f"Vision API not supported for provider {self.provider}, falling back to text-based analysis")
+                return None
+                
+        except Exception as e:
+            logger.error(f"Error analyzing image {image_path}: {e}", exc_info=True)
+            return None
+    
+    async def _analyze_image_openai(self, image_base64: str, prompt: str, image_path: str) -> Optional[Dict[str, Any]]:
+        """Анализ изображения через OpenAI Vision API"""
+        try:
+            # Определяем MIME тип по расширению
+            ext = os.path.splitext(image_path)[1].lower()
+            mime_types = {
+                '.jpg': 'image/jpeg',
+                '.jpeg': 'image/jpeg',
+                '.png': 'image/png',
+                '.gif': 'image/gif',
+                '.webp': 'image/webp'
+            }
+            mime_type = mime_types.get(ext, 'image/jpeg')
+            
+            # Используем gpt-4o или gpt-4-turbo для vision
+            vision_model = 'gpt-4o' if 'gpt-4o' in self.model.lower() else 'gpt-4o'
+            
+            response = self.client.chat.completions.create(
+                model=vision_model,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": prompt
+                            },
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:{mime_type};base64,{image_base64}"
+                                }
+                            }
+                        ]
+                    }
+                ],
+                temperature=0.3,
+                max_tokens=500
+            )
+            
+            content = response.choices[0].message.content
+            
+            # Парсим JSON из ответа
+            try:
+                # Извлекаем JSON из ответа (может быть обернут в markdown код)
+                json_match = re.search(r'\{[^{}]*\}', content, re.DOTALL)
+                if json_match:
+                    json_str = json_match.group(0)
+                    result = json.loads(json_str)
+                    
+                    # Валидация структуры
+                    if 'colors' in result and 'fonts' in result:
+                        logger.info(f"✓ Successfully analyzed image style via OpenAI Vision: colors={result['colors'].get('primary')}, fonts={result['fonts']}")
+                        return result
+                    else:
+                        logger.warning(f"Invalid structure in vision analysis result: {result}")
+                        return None
+                else:
+                    logger.warning(f"No JSON found in vision analysis response: {content[:200]}")
+                    return None
+            except json.JSONDecodeError as e:
+                logger.warning(f"Failed to parse JSON from vision analysis: {e}, response: {content[:200]}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"Error in OpenAI vision analysis: {e}", exc_info=True)
+            return None
+    
+    async def _analyze_image_anthropic(self, image_path: str, prompt: str) -> Optional[Dict[str, Any]]:
+        """Анализ изображения через Anthropic Claude Vision API"""
+        try:
+            import anthropic
+            
+            with open(image_path, 'rb') as image_file:
+                image_data = image_file.read()
+            
+            # Определяем MIME тип
+            ext = os.path.splitext(image_path)[1].lower()
+            mime_types = {
+                '.jpg': 'image/jpeg',
+                '.jpeg': 'image/jpeg',
+                '.png': 'image/png',
+                '.gif': 'image/gif',
+                '.webp': 'image/webp'
+            }
+            mime_type = mime_types.get(ext, 'image/jpeg')
+            
+            message = self.client.messages.create(
+                model='claude-3-5-sonnet-20241022',  # Claude поддерживает vision
+                max_tokens=500,
+                temperature=0.3,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "image",
+                                "source": {
+                                    "type": "base64",
+                                    "media_type": mime_type,
+                                    "data": base64.b64encode(image_data).decode('utf-8')
+                                }
+                            },
+                            {
+                                "type": "text",
+                                "text": prompt
+                            }
+                        ]
+                    }
+                ]
+            )
+            
+            content = message.content[0].text
+            
+            # Парсим JSON
+            try:
+                json_match = re.search(r'\{[^{}]*\}', content, re.DOTALL)
+                if json_match:
+                    json_str = json_match.group(0)
+                    result = json.loads(json_str)
+                    
+                    if 'colors' in result and 'fonts' in result:
+                        logger.info(f"✓ Successfully analyzed image style via Anthropic Vision: colors={result['colors'].get('primary')}, fonts={result['fonts']}")
+                        return result
+                    else:
+                        logger.warning(f"Invalid structure in vision analysis result: {result}")
+                        return None
+                else:
+                    logger.warning(f"No JSON found in vision analysis response: {content[:200]}")
+                    return None
+            except json.JSONDecodeError as e:
+                logger.warning(f"Failed to parse JSON from vision analysis: {e}, response: {content[:200]}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"Error in Anthropic vision analysis: {e}", exc_info=True)
+            return None
+    
+    async def _analyze_image_google(self, image_path: str, prompt: str) -> Optional[Dict[str, Any]]:
+        """Анализ изображения через Google Gemini Vision API"""
+        try:
+            import google.generativeai as genai
+            
+            # Загружаем изображение
+            import PIL.Image
+            image = PIL.Image.open(image_path)
+            
+            # Используем модель с поддержкой vision
+            model = genai.GenerativeModel('gemini-1.5-pro')
+            
+            # Google Gemini API синхронный, но мы в async функции - используем asyncio.to_thread или run_in_executor
+            import asyncio
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(None, lambda: model.generate_content([prompt, image]))
+            content = response.text
+            
+            # Парсим JSON
+            try:
+                json_match = re.search(r'\{[^{}]*\}', content, re.DOTALL)
+                if json_match:
+                    json_str = json_match.group(0)
+                    result = json.loads(json_str)
+                    
+                    if 'colors' in result and 'fonts' in result:
+                        logger.info(f"✓ Successfully analyzed image style via Google Vision: colors={result['colors'].get('primary')}, fonts={result['fonts']}")
+                        return result
+                    else:
+                        logger.warning(f"Invalid structure in vision analysis result: {result}")
+                        return None
+                else:
+                    logger.warning(f"No JSON found in vision analysis response: {content[:200]}")
+                    return None
+            except json.JSONDecodeError as e:
+                logger.warning(f"Failed to parse JSON from vision analysis: {e}, response: {content[:200]}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"Error in Google vision analysis: {e}", exc_info=True)
+            return None
