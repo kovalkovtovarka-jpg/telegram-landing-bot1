@@ -1758,40 +1758,50 @@ class LandingBot:
                 'original_name': f"photo_{file_obj.file_unique_id[:8]}.{ext}",
                 'block': None  # Будет определено в диалоге
             }
-            
-            # Обрабатываем файл через агента
             files_list = [file_info]
-            response = await agent.process_message(
-                f"Пользователь отправил {file_type}",
-                user_id,
-                files=files_list
-            )
-            
-            # После обработки проверяем: если это hero-фото и есть описание товара - запускаем vision-анализ в фоне
-            files_after = agent.collected_data.get('files', [])
-            hero_file = next((f for f in files_after if f.get('block') == 'hero' and f.get('path') == file_path), None)
-            
-            if hero_file and file_type == 'photo':
-                # Проверяем, есть ли уже описание товара
-                products = agent.collected_data.get('products', [])
-                has_description = bool(products and products[0].get('product_description'))
-                
-                if has_description and 'vision_style_suggestion' not in agent.collected_data:
-                    # Запускаем vision-анализ асинхронно (не блокируя ответ пользователю)
-                    product_name = products[0].get('product_name', '')
-                    description = products[0].get('product_description', '')
-                    
-                    # Создаем задачу для фонового анализа
-                    import asyncio
-                    asyncio.create_task(
-                        self._analyze_hero_image_async(user_id, file_path, product_name, description, agent)
+            caption = (update.message.caption or '').strip()
+
+            # Только фото без подписи — короткое подтверждение без вызова LLM
+            if not caption:
+                total = await agent.add_files_only(files_list)
+                ordinals = ('Первое', 'Второе', 'Третье', 'Четвёртое', 'Пятое', 'Шестое', 'Седьмое', 'Восьмое', 'Девятое', 'Десятое')
+                which = ordinals[total - 1] if 1 <= total <= 10 else f'{total}-е'
+                await update.message.reply_text(f"✅ {which} фото получил.")
+                # Vision для hero-фото по возможности
+                files_after = agent.collected_data.get('files', [])
+                hero_file = next((f for f in files_after if f.get('block') == 'hero' and f.get('path') == file_path), None)
+                if hero_file and file_type == 'photo':
+                    products = agent.collected_data.get('products', [])
+                    has_description = bool(products and products[0].get('product_description'))
+                    if has_description and 'vision_style_suggestion' not in agent.collected_data:
+                        import asyncio
+                        asyncio.create_task(
+                            self._analyze_hero_image_async(user_id, file_path, products[0].get('product_name', ''), products[0].get('product_description', ''), agent)
+                        )
+                self._save_ai_agent_state(user_id, agent)
+            else:
+                # Фото с подписью — полная обработка через агента
+                response = await agent.process_message(caption, user_id, files=files_list)
+                files_after = agent.collected_data.get('files', [])
+                hero_file = next((f for f in files_after if f.get('block') == 'hero' and f.get('path') == file_path), None)
+                if hero_file and file_type == 'photo':
+                    products = agent.collected_data.get('products', [])
+                    has_description = bool(products and products[0].get('product_description'))
+                    if has_description and 'vision_style_suggestion' not in agent.collected_data:
+                        import asyncio
+                        asyncio.create_task(
+                            self._analyze_hero_image_async(user_id, file_path, products[0].get('product_name', ''), products[0].get('product_description', ''), agent)
+                        )
+                try:
+                    await update.message.reply_text(
+                        f"✅ Файл получен!\n\n{response}",
+                        parse_mode='HTML'
                     )
-                    logger.info(f"Started background vision analysis for hero image: {file_path}")
-            
-            await update.message.reply_text(
-                f"✅ Файл получен!\n\n{response}",
-                parse_mode='Markdown'
-            )
+                except Exception:
+                    await update.message.reply_text(
+                        "✅ Файл получен!\n\n" + response.replace('<b>', '').replace('</b>', ''),
+                    )
+                self._save_ai_agent_state(user_id, agent)
         except Exception as e:
             logger.error(f"Error handling AI media: {e}", exc_info=True)
             

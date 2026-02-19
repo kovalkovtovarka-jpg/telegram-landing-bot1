@@ -128,6 +128,19 @@ class LandingAIAgent:
         
         return response
     
+    async def add_files_only(self, files: List[Dict]) -> int:
+        """
+        Только добавить файлы в collected_data без вызова LLM.
+        Используется при загрузке фото: бот отвечает коротким «N-е фото получил».
+        Returns:
+            Текущее количество файлов после добавления.
+        """
+        if not files:
+            return len(self.collected_data.get('files', []))
+        await self._process_files(files)
+        await self._check_stage_transition()
+        return len(self.collected_data.get('files', []))
+
     async def _process_files(self, files: List[Dict]) -> Optional[str]:
         """
         Обработать загруженные файлы
@@ -567,6 +580,21 @@ class LandingAIAgent:
         
         return "; ".join(summary) if summary else "Данные еще не собраны"
     
+    def _has_mini_survey_data(self) -> bool:
+        """Проверить, что собраны хотя бы часть данных мини-опроса (цены, подвал, распределение фото)."""
+        general = self.collected_data.get('general_info', {})
+        # Подвал
+        if general.get('fio') or general.get('company_name') or general.get('unp') or general.get('address') or general.get('phone') or general.get('email'):
+            return True
+        # Распределение фото по блокам
+        if general.get('photo_description_count') is not None or general.get('photo_gallery_count') is not None or general.get('photo_reviews_count') is not None:
+            return True
+        # Цены / скидка
+        product = (self.collected_data.get('products') or [{}])[0]
+        if product.get('new_price') or product.get('old_price') or general.get('hero_discount'):
+            return True
+        return False
+
     async def _check_stage_transition(self):
         """Проверить, нужно ли перейти к следующему этапу"""
         if self.stage == 'general_info':
@@ -593,13 +621,14 @@ class LandingAIAgent:
         
         elif self.stage == 'products':
             if self.mode == 'SINGLE':
-                # Минимальный сценарий: для перехода в verification достаточно названия и описания (цену можно в мини-опросе)
+                # В verification переходим только когда есть название, описание и хотя бы часть мини-опроса
+                # (распределение фото, цены или подвал), чтобы не показывать «Генерировать» до сбора всех данных
                 product = (self.collected_data['products'] or [{}])[0]
                 has_name_desc = bool(product.get('product_name') and product.get('product_description'))
-                if self.collected_data['products'] and has_name_desc:
+                if self.collected_data['products'] and has_name_desc and self._has_mini_survey_data():
                     self.stage = 'verification'
                     self.collected_data['stage'] = 'verification'
-                    logger.info("Transitioned to verification stage (product name + description)")
+                    logger.info("Transitioned to verification stage (product + mini-survey data)")
             else:  # MULTI
                 # Проверяем, что все товары собраны
                 if (self.collected_data.get('products_count') and 
