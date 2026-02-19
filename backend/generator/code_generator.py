@@ -205,12 +205,8 @@ class CodeGenerator:
             # Добавляем необходимые элементы
             generated_code = self._add_required_elements(generated_code, template_id, user_data)
             
-            # Сохраняем файлы
+            # Сохраняем файлы (внутри _save_files уже копируются медиа и создаётся ZIP)
             files_info = await self._save_files(generated_code, template_id, user_data)
-            
-            # Копируем медиа файлы пользователя в проект
-            if files_info.get('project_dir'):
-                await self._copy_user_media(files_info.get('project_dir', ''), user_data)
             
             generation_time = int(time.time() - start_time)
             
@@ -477,6 +473,9 @@ class CodeGenerator:
             else:
                 # Используем метод создания send.php
                 await self._create_send_php(project_dir, user_data)
+        
+        # Копируем медиа пользователя в проект до создания ZIP, иначе архив выйдет без фото
+        await self._copy_user_media(project_dir, user_data)
         
         # Создаем ZIP архив
         zip_path = await self._create_zip(project_dir, project_id)
