@@ -2016,6 +2016,12 @@ class LandingBot:
                                 caption="✅ Лендинг успешно сгенерирован!"
                             )
                         logger.info(f"Zip file sent successfully to user {user_id}")
+                        try:
+                            await query.edit_message_text(
+                                "✅ Готово! Лендинг отправлен в чат.\n\nЧтобы создать новый — отправьте /ai"
+                            )
+                        except Exception:
+                            pass
                     except Exception as send_error:
                         logger.error(f"Error sending zip file to user {user_id}: {send_error}", exc_info=True)
                         await query.edit_message_text(f"✅ Лендинг сгенерирован, но произошла ошибка при отправке: {str(send_error)}")
