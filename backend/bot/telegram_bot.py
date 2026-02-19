@@ -509,8 +509,8 @@ class LandingBot:
 /help - Показать помощь"""
         
         try:
-        await update.message.reply_text(
-            welcome_text,
+            await update.message.reply_text(
+                welcome_text,
                 parse_mode='HTML',
                 reply_markup=self.main_keyboard
             )
@@ -520,7 +520,7 @@ class LandingBot:
             await update.message.reply_text(
                 plain_text,
                 reply_markup=self.main_keyboard
-        )
+            )
     
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Обработка команды /help"""
@@ -551,8 +551,8 @@ class LandingBot:
 💡 <b>Совет:</b> Отвечайте подробно - это поможет создать более качественный лендинг!"""
         
         try:
-        await update.message.reply_text(
-            help_text,
+            await update.message.reply_text(
+                help_text,
                 parse_mode='HTML'
             )
         except Exception as e:
@@ -933,7 +933,7 @@ class LandingBot:
         user_id = update.effective_user.id
         context.user_data.pop('admin_waiting_broadcast', None)
         if not self._is_admin(user_id):
-        await update.message.reply_text(
+            await update.message.reply_text(
                 "❌ У вас нет прав. Эта команда только для администраторов."
             )
             return
@@ -1020,7 +1020,7 @@ class LandingBot:
         # Проверка прав администратора
         admin_ids = [aid.strip() for aid in Config.BOT_ADMIN_IDS if aid.strip()]
         if admin_ids and user_id_str not in admin_ids:
-                await update.message.reply_text(
+            await update.message.reply_text(
                 "❌ У вас нет прав для выполнения этой команды.\n\n"
                 "Эта команда доступна только администраторам."
             )
@@ -1216,16 +1216,16 @@ class LandingBot:
             # Есть состояние в БД, но нет в context - состояние потеряно
             if user_data and user_data.get('conversation_type') == 'create':
                 # Предлагаем продолжить или начать сначала
-        keyboard = InlineKeyboardMarkup([
+                keyboard = InlineKeyboardMarkup([
                     [InlineKeyboardButton("🔄 Продолжить создание", callback_data="resume_create")],
                     [InlineKeyboardButton("🆕 Начать сначала", callback_data="restart_create")],
                     [InlineKeyboardButton("❌ Отмена", callback_data="cancel_create")]
                 ])
-        await update.message.reply_text(
+                await update.message.reply_text(
                     "⚠️ Похоже, создание лендинга было прервано.\n\n"
                     "Что вы хотите сделать?",
-            reply_markup=keyboard
-        )
+                    reply_markup=keyboard
+                )
                 return ConversationHandler.END
         
         # Если нет активного состояния, просто игнорируем сообщение
@@ -1363,12 +1363,11 @@ class LandingBot:
         logger.info(f"User {user_id} selected mode: {mode}")
         
         try:
-        await query.edit_message_text(
+            await query.edit_message_text(
                 f"✅ Режим выбран: **{mode_text}**\n\n"
                 "🤖 Запускаю AI-ассистента для сбора данных...",
-            parse_mode='Markdown'
-        )
-            
+                parse_mode='Markdown'
+            )
             # Запускаем AI-ассистента заново (пользователь явно выбрал режим — не восстанавливать старый диалог)
             result = await self.start_ai_agent(user_id, mode, query.message.chat.id, context, force_new=True)
             
@@ -1551,22 +1550,19 @@ class LandingBot:
                                     filename=os.path.basename(zip_file),
                                     caption="✅ Лендинг успешно сгенерирован!"
                                 )
-        else:
+                        else:
                             await update.message.reply_text("✅ Лендинг сгенерирован, но файл не найден.")
-                        
                         # Очищаем агента
                         await self._cleanup_ai_agent_files(user_id)
                         if user_id in self.ai_agents:
                             del self.ai_agents[user_id]
                         if user_id in self.ai_agents_last_activity:
                             del self.ai_agents_last_activity[user_id]
-                        
                         user_data_db = self._get_user_data(user_id)
                         user_data_db.pop('ai_agent_state', None)
                         user_data_db.pop('ai_agent_active', None)
                         user_data_db.pop('last_activity', None)
                         self._save_user_data(user_id, user_data_db, state=None, conversation_type=None)
-                        
                         return ConversationHandler.END
                     else:
                         error = result.get('error', 'Неизвестная ошибка')
@@ -1684,7 +1680,7 @@ class LandingBot:
                             )
                             logger.info(f"Summary with buttons sent (plain text) to user {user_id}")
                             agent._summary_sent = True
-        else:
+                else:
                     logger.warning(f"Generation stage but data incomplete: {missing}")
                     if not hasattr(agent, '_missing_data_sent') or not agent._missing_data_sent:
                         await update.message.reply_text(
@@ -1935,7 +1931,7 @@ class LandingBot:
         logger.info(f"AI agents available: {list(self.ai_agents.keys())}")
         
         try:
-        await query.answer()
+            await query.answer()
             logger.info("Callback query answered successfully")
         except Exception as e:
             logger.error(f"Error answering callback query: {e}", exc_info=True)
@@ -1953,14 +1949,13 @@ class LandingBot:
             allowed, remaining = await rate_limiter.check_db_rate_limit(user_id)
             if not allowed:
                 logger.warning(f"Rate limit exceeded for user {user_id}")
-        await query.edit_message_text(
+                await query.edit_message_text(
                     f"⏸️ Превышен лимит запросов\n\n"
                     f"Вы можете создать максимум {rate_limiter.max_requests} "
                     f"лендингов в час.\n\n"
                     f"Попробуйте позже."
                 )
-        return ConversationHandler.END
-    
+                return ConversationHandler.END
             logger.info(f"Rate limit OK for user {user_id}, starting generation")
             await query.edit_message_text("🔄 Генерирую лендинг... Это может занять несколько минут.")
             
@@ -1978,13 +1973,12 @@ class LandingBot:
             # Без фото лендинг будет без главного изображения — требуем хотя бы одно
             has_photo = bool(user_data.get('hero_media') or user_data.get('photos') or agent.collected_data.get('files'))
             if not has_photo:
-        await query.edit_message_text(
+                await query.edit_message_text(
                     "📷 Чтобы лендинг выглядел привлекательно, нужна хотя бы одна фотография товара.\n\n"
                     "Отправьте фото в чат (оно будет главным изображением на странице), "
                     "затем снова нажмите «Да, генерировать»."
                 )
                 return AI_CONVERSATION
-            
             # Валидация данных перед генерацией
             logger.info(f"Validating data for user {user_id}")
             validation_errors = agent.validate_data()
