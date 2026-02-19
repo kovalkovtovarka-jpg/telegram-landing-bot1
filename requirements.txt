@@ -21,6 +21,7 @@ httpx==0.27.2
 # Utils
 python-dateutil==2.8.2
 tenacity==8.2.3  # Retry механизм для LLM API
+Pillow>=10.0.0  # Для обработки изображений в Google Gemini Vision API
 
 # Security pins (транзитивные зависимости с известными CVE; pip-audit)
 # protobuf не пиним: google-generativeai 0.3.2 требует 4.x; CVE-2026-0994 временно в ignore-vulns в CI
