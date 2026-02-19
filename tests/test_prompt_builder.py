@@ -83,3 +83,60 @@ class TestNewPromptBuilder:
         """Вариации формата для video/mp4"""
         result = builder._get_format_variations("video", "mp4")
         assert "mp4" in result.lower()
+
+    def test_prompt_has_new_structure_blocks_1_to_8(self, builder):
+        """Промпт содержит новую структуру: БЛОК 1 … БЛОК 8 (шаблонный лендинг)."""
+        user_data = {
+            "landing_type": "single_product",
+            "product_name": "Тест",
+            "description_text": "Описание",
+            "new_price": "99",
+            "old_price": "150",
+            "characteristics": ["Характеристика 1", "Характеристика 2", "Характеристика 3"],
+            "footer_info": {"type": "ip", "fio": "Иванов И.И.", "unp": "123", "address": "ул. Test", "phone": "+375291234567", "email": "a@b.by", "schedule": "9-18"},
+        }
+        prompt = builder.build_prompt(user_data)
+        assert "БЛОК 1" in prompt and "HERO" in prompt
+        assert "БЛОК 2" in prompt
+        assert "БЛОК 3" in prompt and "ОПИСАНИЕ" in prompt
+        assert "БЛОК 4" in prompt and "СРЕДНЯЯ ФОРМА" in prompt
+        assert "БЛОК 5" in prompt
+        assert "БЛОК 6" in prompt and "ОТЗЫВЫ" in prompt
+        assert "БЛОК 7" in prompt and "ДУБЛЬ" in prompt
+        assert "БЛОК 8" in prompt and "ПОДВАЛ" in prompt
+        assert "Порядок блоков" in prompt or "строгий порядок" in prompt
+
+    def test_prompt_has_quality_wording_no_line_counts(self, builder):
+        """Промпт требует качество кода (complete, production-ready), без требований по числу строк."""
+        user_data = {
+            "landing_type": "single_product",
+            "product_name": "Товар",
+            "description_text": "",
+            "new_price": "99",
+            "old_price": "150",
+            "characteristics": ["А", "Б", "В"],
+            "footer_info": {},
+        }
+        prompt = builder.build_prompt(user_data)
+        # Должны быть формулировки про полноту/качество
+        assert "complete" in prompt.lower() or "production-ready" in prompt.lower() or "полный" in prompt.lower()
+        # Не должно быть жёстких требований по строкам
+        assert "500+" not in prompt and "200+" not in prompt
+        assert "минимум 500 строк" not in prompt and "минимум 200 строк" not in prompt
+        assert "МИНИМУМ 500" not in prompt and "МИНИМУМ 200" not in prompt
+
+    def test_prompt_describes_block_order(self, builder):
+        """Промпт задаёт порядок блоков: Hero, описание, средняя форма, галерея, отзывы, дубль hero, подвал."""
+        user_data = {
+            "landing_type": "single_product",
+            "product_name": "Товар",
+            "description_text": "",
+            "new_price": "99",
+            "old_price": "150",
+            "characteristics": ["А", "Б", "В"],
+            "footer_info": {"type": "ip", "fio": "ФИО", "unp": "1", "address": "а", "phone": "1", "email": "e@e.by", "schedule": ""},
+        }
+        prompt = builder.build_prompt(user_data)
+        assert "Hero" in prompt or "HERO" in prompt
+        assert "подвал" in prompt.lower() or "ПОДВАЛ" in prompt or "ИП" in prompt or "ООО" in prompt
+        assert "дублируется" in prompt.lower() or "дубликат" in prompt.lower()
