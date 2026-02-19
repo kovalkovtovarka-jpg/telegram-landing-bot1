@@ -532,6 +532,34 @@ JS должен быть полным и рабочим: весь описанн
             logger.error(f"Error analyzing image {image_path}: {e}", exc_info=True)
             return None
     
+    def _parse_vision_json(self, content: str) -> Optional[Dict[str, Any]]:
+        """Извлекает JSON из ответа Vision API (поддержка вложенных объектов)."""
+        if not content or not content.strip():
+            return None
+        start = content.find('{')
+        if start == -1:
+            logger.warning(f"No JSON object in vision response: {content[:200]}")
+            return None
+        depth = 0
+        for i in range(start, len(content)):
+            if content[i] == '{':
+                depth += 1
+            elif content[i] == '}':
+                depth -= 1
+                if depth == 0:
+                    json_str = content[start:i + 1]
+                    try:
+                        result = json.loads(json_str)
+                        # Если модель вернула только объект colors (primary, secondary...) без обёртки
+                        if isinstance(result, dict) and 'primary' in result and 'colors' not in result:
+                            result = {'colors': result, 'fonts': ['Montserrat', 'Inter']}
+                        return result
+                    except json.JSONDecodeError as e:
+                        logger.warning(f"Failed to parse vision JSON: {e}, snippet: {json_str[:150]}")
+                        return None
+        logger.warning("Unclosed JSON in vision response")
+        return None
+    
     async def _analyze_image_openai(self, image_base64: str, prompt: str, image_path: str) -> Optional[Dict[str, Any]]:
         """Анализ изображения через OpenAI Vision API"""
         try:
@@ -574,27 +602,17 @@ JS должен быть полным и рабочим: весь описанн
             
             content = response.choices[0].message.content
             
-            # Парсим JSON из ответа
-            try:
-                # Извлекаем JSON из ответа (может быть обернут в markdown код)
-                json_match = re.search(r'\{[^{}]*\}', content, re.DOTALL)
-                if json_match:
-                    json_str = json_match.group(0)
-                    result = json.loads(json_str)
-                    
-                    # Валидация структуры
-                    if 'colors' in result and 'fonts' in result:
-                        logger.info(f"✓ Successfully analyzed image style via OpenAI Vision: colors={result['colors'].get('primary')}, fonts={result['fonts']}")
-                        return result
-                    else:
-                        logger.warning(f"Invalid structure in vision analysis result: {result}")
-                        return None
-                else:
-                    logger.warning(f"No JSON found in vision analysis response: {content[:200]}")
-                    return None
-            except json.JSONDecodeError as e:
-                logger.warning(f"Failed to parse JSON from vision analysis: {e}, response: {content[:200]}")
-                return None
+            # Парсим JSON из ответа (вложенный объект: {"colors": {...}, "fonts": [...]})
+            result = self._parse_vision_json(content)
+            if result:
+                # Нормализуем: если есть только colors — добавляем шрифты по умолчанию
+                if isinstance(result.get('colors'), dict) and not result.get('fonts'):
+                    result['fonts'] = ['Montserrat', 'Inter']
+                if 'colors' in result and 'fonts' in result:
+                    logger.info(f"✓ Successfully analyzed image style via OpenAI Vision: colors={result['colors'].get('primary')}, fonts={result['fonts']}")
+                    return result
+                logger.warning(f"Invalid structure in vision analysis result: {result}")
+            return None
                 
         except Exception as e:
             logger.error(f"Error in OpenAI vision analysis: {e}", exc_info=True)
@@ -645,26 +663,15 @@ JS должен быть полным и рабочим: весь описанн
             )
             
             content = message.content[0].text
-            
-            # Парсим JSON
-            try:
-                json_match = re.search(r'\{[^{}]*\}', content, re.DOTALL)
-                if json_match:
-                    json_str = json_match.group(0)
-                    result = json.loads(json_str)
-                    
-                    if 'colors' in result and 'fonts' in result:
-                        logger.info(f"✓ Successfully analyzed image style via Anthropic Vision: colors={result['colors'].get('primary')}, fonts={result['fonts']}")
-                        return result
-                    else:
-                        logger.warning(f"Invalid structure in vision analysis result: {result}")
-                        return None
-                else:
-                    logger.warning(f"No JSON found in vision analysis response: {content[:200]}")
-                    return None
-            except json.JSONDecodeError as e:
-                logger.warning(f"Failed to parse JSON from vision analysis: {e}, response: {content[:200]}")
-                return None
+            result = self._parse_vision_json(content)
+            if result:
+                if isinstance(result.get('colors'), dict) and not result.get('fonts'):
+                    result['fonts'] = ['Montserrat', 'Inter']
+                if 'colors' in result and 'fonts' in result:
+                    logger.info(f"✓ Successfully analyzed image style via Anthropic Vision: colors={result['colors'].get('primary')}, fonts={result['fonts']}")
+                    return result
+                logger.warning(f"Invalid structure in vision analysis result: {result}")
+            return None
                 
         except Exception as e:
             logger.error(f"Error in Anthropic vision analysis: {e}", exc_info=True)
@@ -687,26 +694,15 @@ JS должен быть полным и рабочим: весь описанн
             loop = asyncio.get_event_loop()
             response = await loop.run_in_executor(None, lambda: model.generate_content([prompt, image]))
             content = response.text
-            
-            # Парсим JSON
-            try:
-                json_match = re.search(r'\{[^{}]*\}', content, re.DOTALL)
-                if json_match:
-                    json_str = json_match.group(0)
-                    result = json.loads(json_str)
-                    
-                    if 'colors' in result and 'fonts' in result:
-                        logger.info(f"✓ Successfully analyzed image style via Google Vision: colors={result['colors'].get('primary')}, fonts={result['fonts']}")
-                        return result
-                    else:
-                        logger.warning(f"Invalid structure in vision analysis result: {result}")
-                        return None
-                else:
-                    logger.warning(f"No JSON found in vision analysis response: {content[:200]}")
-                    return None
-            except json.JSONDecodeError as e:
-                logger.warning(f"Failed to parse JSON from vision analysis: {e}, response: {content[:200]}")
-                return None
+            result = self._parse_vision_json(content)
+            if result:
+                if isinstance(result.get('colors'), dict) and not result.get('fonts'):
+                    result['fonts'] = ['Montserrat', 'Inter']
+                if 'colors' in result and 'fonts' in result:
+                    logger.info(f"✓ Successfully analyzed image style via Google Vision: colors={result['colors'].get('primary')}, fonts={result['fonts']}")
+                    return result
+                logger.warning(f"Invalid structure in vision analysis result: {result}")
+            return None
                 
         except Exception as e:
             logger.error(f"Error in Google vision analysis: {e}", exc_info=True)
