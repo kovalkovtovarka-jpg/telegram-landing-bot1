@@ -509,8 +509,8 @@ class LandingBot:
 /help - Показать помощь"""
         
         try:
-            await update.message.reply_text(
-                welcome_text,
+        await update.message.reply_text(
+            welcome_text,
                 parse_mode='HTML',
                 reply_markup=self.main_keyboard
             )
@@ -520,7 +520,7 @@ class LandingBot:
             await update.message.reply_text(
                 plain_text,
                 reply_markup=self.main_keyboard
-            )
+        )
     
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Обработка команды /help"""
@@ -551,8 +551,8 @@ class LandingBot:
 💡 <b>Совет:</b> Отвечайте подробно - это поможет создать более качественный лендинг!"""
         
         try:
-            await update.message.reply_text(
-                help_text,
+        await update.message.reply_text(
+            help_text,
                 parse_mode='HTML'
             )
         except Exception as e:
@@ -933,7 +933,7 @@ class LandingBot:
         user_id = update.effective_user.id
         context.user_data.pop('admin_waiting_broadcast', None)
         if not self._is_admin(user_id):
-            await update.message.reply_text(
+        await update.message.reply_text(
                 "❌ У вас нет прав. Эта команда только для администраторов."
             )
             return
@@ -1020,7 +1020,7 @@ class LandingBot:
         # Проверка прав администратора
         admin_ids = [aid.strip() for aid in Config.BOT_ADMIN_IDS if aid.strip()]
         if admin_ids and user_id_str not in admin_ids:
-            await update.message.reply_text(
+                await update.message.reply_text(
                 "❌ У вас нет прав для выполнения этой команды.\n\n"
                 "Эта команда доступна только администраторам."
             )
@@ -1216,16 +1216,16 @@ class LandingBot:
             # Есть состояние в БД, но нет в context - состояние потеряно
             if user_data and user_data.get('conversation_type') == 'create':
                 # Предлагаем продолжить или начать сначала
-                keyboard = InlineKeyboardMarkup([
+        keyboard = InlineKeyboardMarkup([
                     [InlineKeyboardButton("🔄 Продолжить создание", callback_data="resume_create")],
                     [InlineKeyboardButton("🆕 Начать сначала", callback_data="restart_create")],
                     [InlineKeyboardButton("❌ Отмена", callback_data="cancel_create")]
                 ])
-                await update.message.reply_text(
+        await update.message.reply_text(
                     "⚠️ Похоже, создание лендинга было прервано.\n\n"
                     "Что вы хотите сделать?",
-                    reply_markup=keyboard
-                )
+            reply_markup=keyboard
+        )
                 return ConversationHandler.END
         
         # Если нет активного состояния, просто игнорируем сообщение
@@ -1363,11 +1363,11 @@ class LandingBot:
         logger.info(f"User {user_id} selected mode: {mode}")
         
         try:
-            await query.edit_message_text(
+        await query.edit_message_text(
                 f"✅ Режим выбран: **{mode_text}**\n\n"
                 "🤖 Запускаю AI-ассистента для сбора данных...",
-                parse_mode='Markdown'
-            )
+            parse_mode='Markdown'
+        )
             
             # Запускаем AI-ассистента заново (пользователь явно выбрал режим — не восстанавливать старый диалог)
             result = await self.start_ai_agent(user_id, mode, query.message.chat.id, context, force_new=True)
@@ -1551,7 +1551,7 @@ class LandingBot:
                                     filename=os.path.basename(zip_file),
                                     caption="✅ Лендинг успешно сгенерирован!"
                                 )
-                        else:
+        else:
                             await update.message.reply_text("✅ Лендинг сгенерирован, но файл не найден.")
                         
                         # Очищаем агента
@@ -1586,6 +1586,26 @@ class LandingBot:
         try:
             # Обрабатываем сообщение через агента
             response = await agent.process_message(message_text, user_id)
+            
+            # Проверяем: если после обработки появилось описание товара и есть hero-фото - запускаем vision-анализ
+            products = agent.collected_data.get('products', [])
+            files = agent.collected_data.get('files', [])
+            hero_file = next((f for f in files if f.get('block') == 'hero'), None)
+            
+            if products and products[0].get('product_description') and hero_file and hero_file.get('type') == 'photo':
+                # Проверяем, не запускали ли уже анализ
+                if 'vision_style_suggestion' not in agent.collected_data:
+                    product_name = products[0].get('product_name', '')
+                    description = products[0].get('product_description', '')
+                    hero_path = hero_file.get('path')
+                    
+                    if hero_path and os.path.exists(hero_path):
+                        # Запускаем vision-анализ в фоне
+                        import asyncio
+                        asyncio.create_task(
+                            self._analyze_hero_image_async(user_id, hero_path, product_name, description, agent)
+                        )
+                        logger.info(f"Started background vision analysis after description received: {hero_path}")
             
             # Сохраняем состояние агента после обработки сообщения
             self._save_ai_agent_state(user_id, agent)
@@ -1664,7 +1684,7 @@ class LandingBot:
                             )
                             logger.info(f"Summary with buttons sent (plain text) to user {user_id}")
                             agent._summary_sent = True
-                else:
+        else:
                     logger.warning(f"Generation stage but data incomplete: {missing}")
                     if not hasattr(agent, '_missing_data_sent') or not agent._missing_data_sent:
                         await update.message.reply_text(
@@ -1730,6 +1750,7 @@ class LandingBot:
                 ext = 'jpg' if file_type == 'photo' else 'mp4'
             file_path = os.path.join(Config.FILES_DIR, f'temp_{user_id}_{file_obj.file_unique_id}.{ext}')
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            file_path = os.path.abspath(file_path)
 
             file = await self.app.bot.get_file(file_obj.file_id)
             await file.download_to_drive(file_path)
@@ -1749,6 +1770,27 @@ class LandingBot:
                 user_id,
                 files=files_list
             )
+            
+            # После обработки проверяем: если это hero-фото и есть описание товара - запускаем vision-анализ в фоне
+            files_after = agent.collected_data.get('files', [])
+            hero_file = next((f for f in files_after if f.get('block') == 'hero' and f.get('path') == file_path), None)
+            
+            if hero_file and file_type == 'photo':
+                # Проверяем, есть ли уже описание товара
+                products = agent.collected_data.get('products', [])
+                has_description = bool(products and products[0].get('product_description'))
+                
+                if has_description and 'vision_style_suggestion' not in agent.collected_data:
+                    # Запускаем vision-анализ асинхронно (не блокируя ответ пользователю)
+                    product_name = products[0].get('product_name', '')
+                    description = products[0].get('product_description', '')
+                    
+                    # Создаем задачу для фонового анализа
+                    import asyncio
+                    asyncio.create_task(
+                        self._analyze_hero_image_async(user_id, file_path, product_name, description, agent)
+                    )
+                    logger.info(f"Started background vision analysis for hero image: {file_path}")
             
             await update.message.reply_text(
                 f"✅ Файл получен!\n\n{response}",
@@ -1772,6 +1814,51 @@ class LandingBot:
         
         return AI_CONVERSATION
     
+    async def _analyze_hero_image_async(self, user_id: int, image_path: str, product_name: str, description: str, agent):
+        """
+        Асинхронный анализ hero-фото через Vision API (выполняется в фоне, не блокирует диалог)
+        
+        Args:
+            user_id: ID пользователя
+            image_path: Путь к hero-изображению
+            product_name: Название товара
+            description: Описание товара
+            agent: Экземпляр LandingAIAgent
+        """
+        try:
+            logger.info(f"Starting vision analysis for user {user_id}, image: {image_path}")
+            
+            # Используем LLM клиент из code_generator (или создаем новый)
+            from backend.generator.llm_client import LLMClient
+            llm_client = LLMClient()
+            
+            vision_result = await llm_client.analyze_image_style(image_path, product_name, description)
+            
+            if vision_result and 'colors' in vision_result and 'fonts' in vision_result:
+                # Сохраняем результат в агента
+                agent.collected_data['vision_style_suggestion'] = vision_result
+                
+                # Сохраняем состояние агента в БД
+                self._save_ai_agent_state(user_id, agent)
+                
+                logger.info(
+                    f"✓ Vision analysis completed for user {user_id}: "
+                    f"primary={vision_result['colors'].get('primary')}, "
+                    f"fonts={vision_result['fonts']}"
+                )
+                
+                # Опционально: можно отправить уведомление пользователю
+                # await self.app.bot.send_message(
+                #     chat_id=user_id,
+                #     text=f"🎨 Стиль и цвета подобраны на основе фото: {vision_result['colors'].get('primary')}"
+                # )
+            else:
+                logger.warning(f"Vision analysis returned no valid result for user {user_id}, will use text-based analysis")
+                
+        except Exception as e:
+            logger.error(f"Error in background vision analysis for user {user_id}: {e}", exc_info=True)
+            # Не прерываем диалог при ошибке vision-анализа - используем текстовый fallback
+    
     def _format_ai_summary(self, collected_data: Dict[str, Any]) -> str:
         """Форматирование сводки собранных данных"""
         summary = []
@@ -1791,7 +1878,7 @@ class LandingBot:
                 product = products[0]
                 summary.append(f"**Товар:** {product.get('product_name', '-')}")
                 summary.append(f"**Цена:** {product.get('new_price', '-')}")
-            else:
+        else:
                 summary.append(f"**Товаров:** {len(products)}")
         
         files = collected_data.get('files', [])
@@ -1848,7 +1935,7 @@ class LandingBot:
         logger.info(f"AI agents available: {list(self.ai_agents.keys())}")
         
         try:
-            await query.answer()
+        await query.answer()
             logger.info("Callback query answered successfully")
         except Exception as e:
             logger.error(f"Error answering callback query: {e}", exc_info=True)
@@ -1866,14 +1953,14 @@ class LandingBot:
             allowed, remaining = await rate_limiter.check_db_rate_limit(user_id)
             if not allowed:
                 logger.warning(f"Rate limit exceeded for user {user_id}")
-                await query.edit_message_text(
+        await query.edit_message_text(
                     f"⏸️ Превышен лимит запросов\n\n"
                     f"Вы можете создать максимум {rate_limiter.max_requests} "
                     f"лендингов в час.\n\n"
                     f"Попробуйте позже."
                 )
-                return ConversationHandler.END
-            
+        return ConversationHandler.END
+    
             logger.info(f"Rate limit OK for user {user_id}, starting generation")
             await query.edit_message_text("🔄 Генерирую лендинг... Это может занять несколько минут.")
             
@@ -1891,7 +1978,7 @@ class LandingBot:
             # Без фото лендинг будет без главного изображения — требуем хотя бы одно
             has_photo = bool(user_data.get('hero_media') or user_data.get('photos') or agent.collected_data.get('files'))
             if not has_photo:
-                await query.edit_message_text(
+        await query.edit_message_text(
                     "📷 Чтобы лендинг выглядел привлекательно, нужна хотя бы одна фотография товара.\n\n"
                     "Отправьте фото в чат (оно будет главным изображением на странице), "
                     "затем снова нажмите «Да, генерировать»."

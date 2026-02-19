@@ -774,6 +774,11 @@ class LandingAIAgent:
         else:
             user_data['description_is_wildberries'] = False
 
+        # Vision-анализ стиля (если был выполнен при получении hero-фото)
+        vision_suggestion = self.collected_data.get('vision_style_suggestion')
+        if vision_suggestion:
+            user_data['vision_style_suggestion'] = vision_suggestion
+        
         # Файлы: первое = hero, остальные распределяем по блокам (описание, галерея, отзывы)
         files = self.collected_data['files']
         if files:
