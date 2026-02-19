@@ -492,19 +492,26 @@ JS должен быть полным и рабочим: весь описанн
                 image_data = image_file.read()
                 image_base64 = base64.b64encode(image_data).decode('utf-8')
             
-            # Формируем промпт для анализа
-            analysis_prompt = f"""Проанализируй это изображение товара{" " + product_name if product_name else ""} и предложи:
-1. Цветовую палитру для лендинга (5 цветов в hex формате):
-   - primary (основной акцентный цвет, должен быть ярким и привлекательным)
-   - secondary (вторичный акцент)
-   - accent (дополнительный акцент)
-   - bg_dark (темный фон)
-   - bg_darker (еще более темный фон для контраста)
-   
-2. Стиль дизайна (modern/elegant/minimalist/bold/playful)
-3. Пару шрифтов (названия из Google Fonts, например: "Montserrat", "Inter")
+            # Контекст товара для подбора подходящих цветов (здоровье/сон — спокойные тона)
+            product_context = (product_name or '') + ' ' + (description or '')
+            product_context = product_context.lower()[:500]
+            style_hint = ""
+            if any(k in product_context for k in ('подушка', 'ортопедическ', 'сон', 'здоров', 'матрас', 'спальн', 'отдых', 'комфорт')):
+                style_hint = " Товар связан со сном/здоровьем/комфортом: выбери СПОКОЙНУЮ палитру — приглушённые синие, мягкие зелёные, тёплые нейтральные; избегай кислотно-ярких и агрессивных цветов."
+            elif any(k in product_context for k in ('красот', 'косметик', 'уход')):
+                style_hint = " Товар из категории красоты: уместны мягкие розовые, лавандовые, пастельные тона."
+            elif any(k in product_context for k in ('техник', 'гаджет', 'электроник')):
+                style_hint = " Технический товар: допустимы более контрастные и современные цвета (синий, серый)."
 
-Ответ в формате JSON:
+            # Формируем промпт для анализа
+            analysis_prompt = f"""Проанализируй это изображение товара{" " + product_name if product_name else ""} и предложи цветовую палитру и стиль для лендинга.
+{style_hint}
+
+1. Цветовая палитра (5 цветов в hex): primary (основной акцент), secondary, accent, bg_dark, bg_darker. Цвета должны ПОДХОДИТЬ под тематику товара и изображение.
+2. Стиль: modern / elegant / minimalist / bold / playful.
+3. Два шрифта из Google Fonts (например Montserrat, Inter).
+
+Ответ — только валидный JSON:
 {{
   "colors": {{
     "primary": "#hex",

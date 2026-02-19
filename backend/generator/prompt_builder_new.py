@@ -43,11 +43,11 @@ class NewPromptBuilder:
         # Подбираем цветовую схему на основе категории
         color_schemes = {
             'health': {
-                'primary': '#4f46e5',  # Индиго (спокойствие, здоровье)
-                'secondary': '#10b981',  # Зеленый (здоровье, природа)
-                'accent': '#06b6d4',  # Циан
-                'bg_dark': '#0f172a',  # Темно-синий
-                'bg_darker': '#020617'
+                'primary': '#5b7c99',  # Приглушённый синий (сон, спокойствие)
+                'secondary': '#6b9080',  # Мягкий зелёный (здоровье, отдых)
+                'accent': '#a4c3b2',  # Светло-зелёный
+                'bg_dark': '#1e2d3a',  # Тёмно-синий, не агрессивный
+                'bg_darker': '#0d1821'
             },
             'beauty': {
                 'primary': '#ec4899',  # Розовый
@@ -118,11 +118,33 @@ class NewPromptBuilder:
         
         return {
             'category': category,
+            'style': 'elegant' if category == 'health' else 'modern',
             'colors': colors,
             'fonts': font_pair,
-            'style': 'modern' if category in ['tech', 'fashion', 'sports'] else 'elegant'
         }
     
+    def _is_very_bright_palette(self, colors: dict) -> bool:
+        """Проверка, что палитра слишком яркая для категории health (высокая насыщенность primary)."""
+        primary = (colors.get('primary') or '').strip()
+        if not primary or not primary.startswith('#'):
+            return False
+        try:
+            hex_val = primary.lstrip('#')
+            if len(hex_val) == 6:
+                r, g, b = int(hex_val[0:2], 16) / 255, int(hex_val[2:4], 16) / 255, int(hex_val[4:6], 16) / 255
+            elif len(hex_val) == 3:
+                r, g, b = (int(hex_val[i], 16) * 17 / 255 for i in range(3))
+            else:
+                return False
+            mx, mn = max(r, g, b), min(r, g, b)
+            if mx == 0:
+                return False
+            saturation = (mx - mn) / mx
+            luminance = 0.299 * r + 0.587 * g + 0.114 * b
+            return saturation > 0.65 or luminance > 0.75
+        except Exception:
+            return False
+
     def _get_format_variations(self, media_type: str, format_key: str) -> str:
         """Получить вариации формата для промпта"""
         variations = {
@@ -191,6 +213,12 @@ class NewPromptBuilder:
         if vision_suggestion and 'colors' in vision_suggestion and 'fonts' in vision_suggestion:
             logger.info("Using vision-based style suggestion from image analysis")
             style_suggestion = vision_suggestion
+            # Для здоровья/сна: если Vision вернул слишком яркие цвета — подменяем на спокойную палитру
+            category = style_suggestion.get('category', 'general')
+            if category == 'health' and self._is_very_bright_palette(style_suggestion.get('colors', {})):
+                fallback = self._analyze_product_and_suggest_style(product_name, description_text)
+                style_suggestion = {**style_suggestion, 'colors': fallback['colors']}
+                logger.info("Vision colors too bright for health category, using calmer palette")
         else:
             logger.info("Using text-based style suggestion (no vision analysis available)")
             style_suggestion = self._analyze_product_and_suggest_style(product_name, description_text)
@@ -267,15 +295,21 @@ class NewPromptBuilder:
 ║ СТРУКТУРА ЛЕНДИНГА (строгий порядок блоков)                   ║
 ╚═══════════════════════════════════════════════════════════════╝
 
-Порядок блоков:
+Порядок блоков (каждый блок — отдельная секция <section class="..."> с заголовком и отступами):
 1. HERO — первый кадр + скидка/акция + короткое описание + форма заказа
 2. [Если есть видео] Блок видео — сразу под hero, автозапуск при попадании в зону видимости
-3. Описание товара — абзацы, при необходимости фото
+3. Описание товара — абзацы, при необходимости фото (каждое фото в своём блоке/секции)
 4. Средняя форма заказа (дубликат формы из hero)
 5. [Если достаточно фото] Галерея — карусель, минимум 2 фото, 3:4
 6. Отзывы — под товар по описанию (с фото или без; если с фото — 3:4)
 7. Дубль hero — фото + форма заказа
-8. Подвал — ИП/ООО, УНП, адрес, время работы, email
+8. Подвал — ОБЯЗАТЕЛЬНО: ИП (ФИО) или ООО (название), УНП, адрес, телефон, email, время работы (все указанные данные вывести)
+
+ТРЕБОВАНИЯ К ВЕРСТКЕ (ОБЯЗАТЕЛЬНО):
+- Каждая смысловая часть — в отдельном теге <section class="..."> (hero, description-section, gallery-section, reviews-section, footer). Не сливать блоки в один поток.
+- Фото строго по блокам: hero — одно главное; описание — свои фото в блоке описания; галерея — в отдельной секции; отзывы — фото в блоке отзывов. Каждый блок со своими классами и отступами.
+- Все изображения на всю ширину контейнера: в CSS для section img, .hero img, .gallery img, .description img, .reviews img задать width: 100%; max-width: 100%; height: auto; object-fit: cover; display: block;
+- Текст описания разбить на короткие абзацы и списки (буллеты), с подзаголовками (h2/h3); не один сплошной абзац.
 
 ═══════════════════════════════════════════════════════════════
 БЛОК 1: HERO (первый кадр, самый сочный)
@@ -582,9 +616,10 @@ class NewPromptBuilder:
 Повтор hero: то же фото (или несколько, если разные цвета), скидка/акция, форма заказа (идентичная верхней и средней).
 
 ═══════════════════════════════════════════════════════════════
-БЛОК 8: ПОДВАЛ САЙТА
+БЛОК 8: ПОДВАЛ САЙТА (ОБЯЗАТЕЛЬНО вывести все указанные данные)
 ═══════════════════════════════════════════════════════════════
 
+В подвале <footer class="footer"> вывести ВСЕ данные ниже: ИП (ФИО) или ООО (название), УНП, адрес, телефон, email, время работы. Не заменять заглушками.
 Тип: {footer_info.get('type', 'ip').upper()}
 """
         
@@ -645,6 +680,7 @@ HTML:
 
 CSS:
 - Полный и рабочий: все секции оформлены, без пустых блоков и без «воды».
+- Изображения в секциях на всю ширину: section img, .hero img, .gallery img, .product-visual img {{ width: 100%; max-width: 100%; height: auto; object-fit: cover; display: block; }}
 - Недопустимо: пустой файл, только комментарии, отсутствие стилей.
 
 ПОДБОР СТИЛЯ НА ОСНОВЕ ТОВАРА:

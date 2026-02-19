@@ -363,8 +363,76 @@ class CodeGenerator:
             html
         )
         
+        # Подвал: всегда подставляем из user_data при наличии данных (заменяем пустой/дефолтный footer)
+        footer_html = self._build_footer_html(user_data)
+        if footer_html:
+            # Удаляем любой существующий footer, чтобы подставить свой с ИП/УНП/адресом
+            html = re.sub(r'<footer[^>]*>[\s\S]*?</footer>\s*', '', html, flags=re.IGNORECASE)
+            html = html.replace('</body>', footer_html + '\n</body>')
+        # Гарантируем полноширинные изображения во всех блоках
+        img_fullwidth_css = """
+/* Полноширинные изображения во всех блоках лендинга */
+section img, .hero img, .hero-section img, .gallery img, .benefits-section img, .product-visual img,
+.description img, .reviews img, .carousel img, [class*="carousel"] img, [class*="hero"] img,
+[class*="gallery"] img, [class*="section"] img, img[src^="img/"] {
+  width: 100% !important; max-width: 100% !important; height: auto !important;
+  object-fit: cover; display: block; box-sizing: border-box;
+}
+"""
+        if img_fullwidth_css.strip() not in (code.get('css') or ''):
+            code['css'] = (code.get('css') or '') + '\n' + img_fullwidth_css
+        
         code['html'] = html
         return code
+    
+    def _build_footer_html(self, user_data: Dict[str, Any]) -> str:
+        """Собрать HTML подвала из user_data (ИП/ООО, УНП, адрес, телефон, email, время работы)."""
+        footer_info = user_data.get('footer_info') or {}
+        if not footer_info:
+            footer_info = {
+                'company_name': user_data.get('company_name', ''),
+                'fio': user_data.get('fio', ''),
+                'ip_name': user_data.get('ip_name', ''),
+                'unp': user_data.get('unp', ''),
+                'ogrn': user_data.get('ogrn', ''),
+                'inn': user_data.get('inn', ''),
+                'address': user_data.get('address', ''),
+                'phone': user_data.get('phone', ''),
+                'email': user_data.get('email', ''),
+                'schedule': user_data.get('schedule', ''),
+            }
+        if not any(footer_info.values()):
+            return ''
+        is_ul = footer_info.get('type') == 'ul'
+        company_name = (footer_info.get('company_name') or '').strip()
+        fio = (footer_info.get('fio') or footer_info.get('ip_name') or '').strip()
+        out = '    <footer class="footer">\n        <div class="footer-content">\n'
+        if is_ul and company_name:
+            out += f'            <p class="footer-company">{company_name}</p>\n'
+        elif fio:
+            out += f'            <p class="footer-ip">ИП {fio}</p>\n'
+        legal = []
+        if footer_info.get('unp'):
+            legal.append(f'УНП: {footer_info["unp"]}')
+        if footer_info.get('ogrn'):
+            legal.append(f'ОГРН: {footer_info["ogrn"]}')
+        if footer_info.get('inn'):
+            legal.append(f'ИНН: {footer_info["inn"]}')
+        if legal:
+            out += f'            <p class="footer-legal">{" | ".join(legal)}</p>\n'
+        if footer_info.get('address'):
+            out += f'            <p class="footer-address">{footer_info["address"]}</p>\n'
+        contact = []
+        if footer_info.get('phone'):
+            contact.append(f'Тел: {footer_info["phone"]}')
+        if footer_info.get('email'):
+            contact.append(f'Email: {footer_info["email"]}')
+        if contact:
+            out += f'            <p class="footer-contact">{" | ".join(contact)}</p>\n'
+        if footer_info.get('schedule'):
+            out += f'            <p class="footer-schedule">Время работы: {footer_info["schedule"]}</p>\n'
+        out += '        </div>\n    </footer>\n'
+        return out
     
     async def _save_files(self, code: Dict[str, str], template_id: str, user_data: Dict[str, Any]) -> Dict[str, str]:
         """
@@ -614,15 +682,17 @@ class CodeGenerator:
         product_price = user_data.get('new_price', user_data.get('price', '99 BYN'))
         
         notification_type = user_data.get('notification_type', 'telegram')
-        notification_email = user_data.get('notification_email', '')
-        notification_telegram_token = user_data.get('notification_telegram_token', '')
-        notification_telegram_chat_id = user_data.get('notification_telegram_chat_id', '')
+        footer_info = user_data.get('footer_info') or {}
+        notification_email = (user_data.get('notification_email') or '').strip() or footer_info.get('email', '').strip()
+        notification_telegram_token = (user_data.get('notification_telegram_token') or '').strip()
+        notification_telegram_chat_id = (user_data.get('notification_telegram_chat_id') or '').strip()
         
+        product_name_esc = (product_name or 'Товар').replace('\\', '\\\\').replace("'", "\\'")
         # Формируем сообщение с данными формы
         php_content = f'''<?php
 // Обработчик отправки заявок с лендинга
-// Товар: {product_name}
-// Цена: {product_price}
+$product_name = '{product_name_esc}';
+$product_price = '{product_price}';
 
 // Получаем данные из формы
 $name = isset($_POST['name']) ? htmlspecialchars($_POST['name']) : '';
@@ -648,15 +718,14 @@ if ($characteristic) $message .= "Характеристика: " . $characteris
 '''
         
         if notification_type == 'telegram' and notification_telegram_token and notification_telegram_chat_id:
-            php_content += f'''// Отправка в Telegram
+            php_content += f'''// Отправка в Telegram (plain text — переносы строк сохраняются)
 $telegramBotToken = '{notification_telegram_token}';
 $telegramChatId = '{notification_telegram_chat_id}';
 
 $url = "https://api.telegram.org/bot" . $telegramBotToken . "/sendMessage";
 $data = [
     'chat_id' => $telegramChatId,
-    'text' => $message,
-    'parse_mode' => 'HTML'
+    'text' => $message
 ];
 
 $ch = curl_init();
@@ -694,8 +763,19 @@ if ($mailSent) {{
 }}
 '''
         else:
-            php_content += '''// Уведомления не настроены
-echo "Ошибка: уведомления не настроены";
+            # Пробуем отправить на email из подвала, если указан
+            fallback_email = (footer_info.get('email') or '').strip()
+            if fallback_email:
+                php_content += f'''// Резерв: отправка на email из подвала (telegram не настроен)
+$to = '{fallback_email}';
+$subject = "Новый заказ: " . $product_name;
+$headers = "From: noreply@landing.com\\r\\nContent-Type: text/plain; charset=UTF-8\\r\\n";
+if (@mail($to, $subject, $message, $headers)) {{
+    header('Location: good.html');
+    exit;
+}}
+'''
+            php_content += '''echo "Ошибка: уведомления не настроены. Укажите Telegram или email при создании лендинга.";
 '''
         
         php_file = os.path.join(project_dir, 'send.php')
@@ -893,59 +973,7 @@ echo "Ошибка: уведомления не настроены";
             reviews_html += '            </div>\n'
             reviews_html += '        </section>\n'
         
-        # Подвал с информацией о компании
-        footer_html = ''
-        footer_info = user_data.get('footer_info', {})
-        if not footer_info:
-            # Пробуем получить из extra_fields или других полей
-            footer_info = {
-                'company_name': user_data.get('company_name', ''),
-                'ip_name': user_data.get('ip_name', ''),
-                'unp': user_data.get('unp', ''),
-                'ogrn': user_data.get('ogrn', ''),
-                'inn': user_data.get('inn', ''),
-                'address': user_data.get('address', ''),
-                'phone': user_data.get('phone', ''),
-                'email': user_data.get('email', '')
-            }
-        
-        # Формируем подвал, если есть хотя бы одно поле
-        if any(footer_info.values()):
-            footer_html = '    <footer class="footer">\n'
-            footer_html += '        <div class="footer-content">\n'
-            
-            if footer_info.get('company_name'):
-                footer_html += f'            <p class="footer-company">{footer_info["company_name"]}</p>\n'
-            
-            if footer_info.get('ip_name'):
-                footer_html += f'            <p class="footer-ip">ИП {footer_info["ip_name"]}</p>\n'
-            
-            footer_items = []
-            if footer_info.get('unp'):
-                footer_items.append(f'УНП: {footer_info["unp"]}')
-            if footer_info.get('ogrn'):
-                footer_items.append(f'ОГРН: {footer_info["ogrn"]}')
-            if footer_info.get('inn'):
-                footer_items.append(f'ИНН: {footer_info["inn"]}')
-            
-            if footer_items:
-                footer_html += f'            <p class="footer-legal">{" | ".join(footer_items)}</p>\n'
-            
-            if footer_info.get('address'):
-                footer_html += f'            <p class="footer-address">{footer_info["address"]}</p>\n'
-            
-            contact_items = []
-            if footer_info.get('phone'):
-                contact_items.append(f'Тел: {footer_info["phone"]}')
-            if footer_info.get('email'):
-                contact_items.append(f'Email: {footer_info["email"]}')
-            
-            if contact_items:
-                footer_html += f'            <p class="footer-contact">{" | ".join(contact_items)}</p>\n'
-            
-            footer_html += '        </div>\n'
-            footer_html += '    </footer>\n'
-        
+        footer_html = self._build_footer_html(user_data)
         return f'''<!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -1030,57 +1058,7 @@ echo "Ошибка: уведомления не настроены";
             </a>
         </section>'''
         
-        # Подвал
-        footer_html = ''
-        footer_info = user_data.get('footer_info', {})
-        if not footer_info:
-            footer_info = {
-                'company_name': user_data.get('company_name', ''),
-                'ip_name': user_data.get('ip_name', ''),
-                'unp': user_data.get('unp', ''),
-                'ogrn': user_data.get('ogrn', ''),
-                'inn': user_data.get('inn', ''),
-                'address': user_data.get('address', ''),
-                'phone': user_data.get('phone', ''),
-                'email': user_data.get('email', '')
-            }
-        
-        if any(footer_info.values()):
-            footer_html = '    <footer class="footer">\n'
-            footer_html += '        <div class="footer-content">\n'
-            
-            if footer_info.get('company_name'):
-                footer_html += f'            <p class="footer-company">{footer_info["company_name"]}</p>\n'
-            
-            if footer_info.get('ip_name'):
-                footer_html += f'            <p class="footer-ip">ИП {footer_info["ip_name"]}</p>\n'
-            
-            footer_items = []
-            if footer_info.get('unp'):
-                footer_items.append(f'УНП: {footer_info["unp"]}')
-            if footer_info.get('ogrn'):
-                footer_items.append(f'ОГРН: {footer_info["ogrn"]}')
-            if footer_info.get('inn'):
-                footer_items.append(f'ИНН: {footer_info["inn"]}')
-            
-            if footer_items:
-                footer_html += f'            <p class="footer-legal">{" | ".join(footer_items)}</p>\n'
-            
-            if footer_info.get('address'):
-                footer_html += f'            <p class="footer-address">{footer_info["address"]}</p>\n'
-            
-            contact_items = []
-            if footer_info.get('phone'):
-                contact_items.append(f'Тел: {footer_info["phone"]}')
-            if footer_info.get('email'):
-                contact_items.append(f'Email: {footer_info["email"]}')
-            
-            if contact_items:
-                footer_html += f'            <p class="footer-contact">{" | ".join(contact_items)}</p>\n'
-            
-            footer_html += '        </div>\n'
-            footer_html += '    </footer>\n'
-        
+        footer_html = self._build_footer_html(user_data)
         return f'''<!DOCTYPE html>
 <html lang="ru">
 <head>
