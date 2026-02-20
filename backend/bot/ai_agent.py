@@ -247,7 +247,13 @@ class LandingAIAgent:
                     logger.info(f"Missing required fields for products: {missing_required}, using LLM extraction")
                     llm_extracted = await self._llm_extract_data(message, stage)
                     if llm_extracted:
-                        extracted.update(llm_extracted)
+                        # Не затирать токен/chat_id из простого парсинга пустыми значениями от LLM
+                        for k, v in llm_extracted.items():
+                            if k in ('notification_telegram_token', 'notification_telegram_chat_id'):
+                                if v and (v if isinstance(v, str) else str(v)).strip():
+                                    extracted[k] = v if isinstance(v, str) else str(v)
+                            else:
+                                extracted[k] = v
             elif not extracted:
                 # Если товар еще не создан и простой парсинг ничего не нашел, используем LLM
                 llm_extracted = await self._llm_extract_data(message, stage)
@@ -300,11 +306,11 @@ class LandingAIAgent:
                 token_match = re.search(r'(\d{8,12}:[A-Za-z0-9_-]{30,})', message)
             if token_match:
                 extracted['notification_telegram_token'] = token_match.group(1).strip()
-            chat_match = re.search(r'чат\s*(?:айди|id|айди)?\s*[:\s]*(-?\d+)', message_lower)
+            chat_match = re.search(r'чат\s*(?:айди|id)?\s*[:\s]*(-?\d+)', message, re.IGNORECASE)
             if not chat_match:
                 chat_match = re.search(r'chat\s*id\s*[:\s]*(-?\d+)', message, re.IGNORECASE)
             if not chat_match:
-                chat_match = re.search(r'(-?\d{10,})', message)  # chat id обычно 10+ цифр
+                chat_match = re.search(r'(-\d{9,})', message)
             if chat_match:
                 extracted['notification_telegram_chat_id'] = chat_match.group(1).strip()
 
@@ -359,11 +365,12 @@ class LandingAIAgent:
                 token_match = re.search(r'(\d{8,12}:[A-Za-z0-9_-]{30,})', message)
             if token_match:
                 extracted['notification_telegram_token'] = token_match.group(1).strip()
-            chat_match = re.search(r'чат\s*(?:айди|id|айди)?\s*[:\s]*(-?\d+)', message, re.IGNORECASE)
+            chat_match = re.search(r'чат\s*(?:айди|id)?\s*[:\s]*(-?\d+)', message, re.IGNORECASE)
             if not chat_match:
                 chat_match = re.search(r'chat\s*id\s*[:\s]*(-?\d+)', message, re.IGNORECASE)
             if not chat_match:
-                chat_match = re.search(r'(-?\d{10,})', message)
+                # Отрицательный id (супергруппа/канал), чтобы не спутать с первой частью токена
+                chat_match = re.search(r'(-\d{9,})', message)
             if chat_match:
                 extracted['notification_telegram_chat_id'] = chat_match.group(1).strip()
         return extracted
@@ -455,7 +462,15 @@ class LandingAIAgent:
             footer_keys = {'notification_type', 'notification_email', 'notification_telegram_token', 'notification_telegram_chat_id',
                            'type', 'fio', 'company_name', 'unp', 'address', 'phone', 'email', 'schedule',
                            'photo_description_count', 'photo_gallery_count', 'photo_reviews_count', 'want_video'}
-            general_from_extract = {k: v for k, v in normalized.items() if k in footer_keys and v not in (None, '')}
+            # В general_info только непустые значения; строки проверяем через strip
+            def _ok(v):
+                if v is None:
+                    return False
+                if isinstance(v, str):
+                    return bool(v.strip())
+                return True
+            general_from_extract = {k: (v.strip() if isinstance(v, str) else v) for k, v in normalized.items()
+                                   if k in footer_keys and _ok(v)}
             if general_from_extract:
                 self.collected_data['general_info'].update(general_from_extract)
             if self.mode == 'SINGLE':
@@ -626,6 +641,28 @@ class LandingAIAgent:
         
         return "; ".join(summary) if summary else "Данные еще не собраны"
     
+    def recover_telegram_credentials_from_history(self) -> None:
+        """Восстановить токен и chat_id из последних сообщений пользователя, если их нет в general_info."""
+        general = self.collected_data.get('general_info', {})
+        if general.get('notification_telegram_token') and general.get('notification_telegram_chat_id'):
+            return
+        import re
+        for msg in reversed(self.conversation_history[-15:]):
+            if msg.get('role') != 'user':
+                continue
+            text = (msg.get('content') or '')
+            if not general.get('notification_telegram_token'):
+                m = re.search(r'токен\s*(?:бота)?\s*[:\s]*([0-9]+:[A-Za-z0-9_-]+)', text, re.IGNORECASE) or re.search(r'(\d{8,12}:[A-Za-z0-9_-]{30,})', text)
+                if m:
+                    general['notification_telegram_token'] = m.group(1).strip()
+            if not general.get('notification_telegram_chat_id'):
+                m = re.search(r'чат\s*(?:айди|id)?\s*[:\s]*(-?\d+)', text, re.IGNORECASE) or re.search(r'chat\s*id\s*[:\s]*(-?\d+)', text, re.IGNORECASE) or re.search(r'(-\d{9,})', text)
+                if m:
+                    general['notification_telegram_chat_id'] = m.group(1).strip()
+            if general.get('notification_telegram_token') and general.get('notification_telegram_chat_id'):
+                logger.info("Recovered notification_telegram_token and notification_telegram_chat_id from conversation history")
+                break
+
     def _has_mini_survey_data(self) -> bool:
         """Проверить, что собраны хотя бы часть данных мини-опроса (цены, подвал, распределение фото)."""
         general = self.collected_data.get('general_info', {})

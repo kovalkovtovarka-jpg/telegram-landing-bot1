@@ -1969,6 +1969,8 @@ class LandingBot:
             logger.info(f"Rate limit OK for user {user_id}, starting generation")
             await query.edit_message_text("🔄 Генерирую лендинг... Это может занять несколько минут.")
             
+            # Восстановить токен/chat_id из истории, если не попали в general_info
+            agent.recover_telegram_credentials_from_history()
             # Преобразуем данные агента в формат user_data
             logger.info(f"Converting AI agent data to user_data for user {user_id}")
             logger.info(f"Agent collected_data keys: {list(agent.collected_data.keys())}")
