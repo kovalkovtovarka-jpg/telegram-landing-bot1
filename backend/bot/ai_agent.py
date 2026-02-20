@@ -28,7 +28,7 @@ class LandingAIAgent:
 - Скидка: есть ли скидка и какой процент/текст (например: 30% или «−30%»).
 - Цены: старая (до скидки) и новая (со скидкой), например 150 BYN и 99 BYN.
 - Подвал сайта: ИП или ООО — название (ФИО для ИП / название компании для ООО), УНП, адрес, телефон, email, при необходимости время работы.
-- Заявки из формы: куда отправлять — в Telegram (нужны токен бота и id чата) или на email (указать адрес).
+- Заявки из формы: куда отправлять — в Telegram или на email. Если в Telegram — обязательно запроси у клиента: (1) токен бота (получить у @BotFather), (2) chat id чата, куда присылать заявки. Без токена и chat id заявки в Telegram работать не будут. Если на email — укажи адрес.
 - Распределение фото: кроме главного (hero), какие блоки заполнять — описание, галерея, отзывы. Например: «2 фото в описание, 3 в галерею, 2 в отзывы» или «все в галерею».
 - Видео: нужен ли на лендинге блок с видео? Если да — попроси прислать видео потом.
 
@@ -344,9 +344,9 @@ class LandingAIAgent:
 
 Для этапа general_info извлекай:
 - goal, target_audience, style, language
-- notification_type (email/telegram)
+- notification_type (email или telegram)
 - notification_email (если заявки на почту)
-- notification_telegram_token, notification_telegram_chat_id (если заявки в Telegram)
+- notification_telegram_token (токен бота, строка вида 123456789:ABC...), notification_telegram_chat_id (id чата, число или строка из цифр, возможно с минусом) — обязательно оба, если заявки в Telegram
 - footer: type (ip/ooo), fio (для ИП), company_name (для ООО), unp, address, phone, email, schedule
 - hero_discount (текст скидки, например "-30%"), hero_discount_position (top_right)
 - photo_description_count, photo_gallery_count, photo_reviews_count (числа: сколько фото в блок описание, галерея, отзывы)
@@ -871,18 +871,19 @@ class LandingAIAgent:
         # Валидация общей информации
         general = self.collected_data.get('general_info', {})
         
-        # Проверка notification_type (необязательная - можно использовать значения по умолчанию)
+        # Заявки в Telegram — обязательно токен бота и chat id от клиента
         notification_type = general.get('notification_type', 'telegram')
         if notification_type == 'email':
-            contact = general.get('contact_info', '')
-            if contact and '@' not in str(contact):
-                errors.append("Для email уведомлений нужен корректный email адрес")
-            # Если contact_info не указан, используем значение по умолчанию
+            email_val = general.get('notification_email', '') or general.get('email', '')
+            if not (email_val and '@' in str(email_val)):
+                errors.append("Для отправки заявок на email укажите корректный email (в подвале или «заявки на почту»)")
         elif notification_type == 'telegram':
-            contact = general.get('contact_info', '')
-            # Если contact_info не указан, это не критично - можно использовать значение по умолчанию
-            if contact and not contact.startswith('@') and not contact.isdigit():
-                errors.append("Для telegram уведомлений нужен username (@username) или ID")
+            token = (general.get('notification_telegram_token') or '').strip()
+            chat_id = (general.get('notification_telegram_chat_id') or '').strip()
+            if not token:
+                errors.append("Для заявок в Telegram укажите токен бота (получить у @BotFather)")
+            if not chat_id:
+                errors.append("Для заявок в Telegram укажите chat id чата, куда присылать заявки")
         
         # Валидация товаров
         if self.mode == 'SINGLE':
