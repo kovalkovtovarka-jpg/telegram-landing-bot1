@@ -1224,10 +1224,10 @@ if (@mail($to, $subject, $message, $headers)) {{
     <div class="container">
         <section class="thank-you-section">
             <div class="thank-you-icon">✓</div>
-            <h1 class="thank-you-title">Спасибо за заказ!</h1>
+            <h1 class="thank-you-title">Спасибо за заявку!</h1>
             <p class="thank-you-text">
-                Ваш заказ на <strong>{product_name}</strong> успешно оформлен.<br>
-                Наш менеджер свяжется с вами в ближайшее время для подтверждения заказа.
+                Ваша заявка на <strong>{product_name}</strong> принята.<br>
+                Менеджер свяжется с вами в течение 15–30 минут.
             </p>
         </section>
 {related_html}    </div>
