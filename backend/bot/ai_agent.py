@@ -286,8 +286,27 @@ class LandingAIAgent:
             # Уведомления
             if 'email' in message_lower or '@' in message:
                 extracted['notification_type'] = 'email'
-            elif 'telegram' in message_lower or 'телеграм' in message_lower:
+            elif 'telegram' in message_lower or 'телеграм' in message_lower or ' тг ' in message_lower or 'тг,' in message_lower:
                 extracted['notification_type'] = 'telegram'
+            # Email для заявок (если указан в сообщении)
+            import re
+            email_match = re.search(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+', message)
+            if email_match:
+                extracted['notification_email'] = email_match.group(0)
+                extracted['email'] = email_match.group(0)
+            # Токен бота и chat id (для заявок в Telegram) — токен чувствителен к регистру
+            token_match = re.search(r'токен\s*(?:бота)?\s*[:\s]*([0-9]+:[A-Za-z0-9_-]+)', message, re.IGNORECASE)
+            if not token_match:
+                token_match = re.search(r'(\d{8,12}:[A-Za-z0-9_-]{30,})', message)
+            if token_match:
+                extracted['notification_telegram_token'] = token_match.group(1).strip()
+            chat_match = re.search(r'чат\s*(?:айди|id|айди)?\s*[:\s]*(-?\d+)', message_lower)
+            if not chat_match:
+                chat_match = re.search(r'chat\s*id\s*[:\s]*(-?\d+)', message, re.IGNORECASE)
+            if not chat_match:
+                chat_match = re.search(r'(-?\d{10,})', message)  # chat id обычно 10+ цифр
+            if chat_match:
+                extracted['notification_telegram_chat_id'] = chat_match.group(1).strip()
 
             # Скидка в hero (процент или текст)
             import re
@@ -326,6 +345,27 @@ class LandingAIAgent:
                 if pct:
                     extracted['hero_discount'] = f'-{pct}%'
                     extracted['hero_discount_position'] = 'top_right'
+            # Заявки: email или Telegram (токен + chat id)
+            if 'email' in message_lower or '@' in message:
+                extracted['notification_type'] = 'email'
+                email_match = re.search(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+', message)
+                if email_match:
+                    extracted['notification_email'] = email_match.group(0)
+                    extracted['email'] = email_match.group(0)
+            if 'telegram' in message_lower or 'телеграм' in message_lower or ' тг ' in message_lower or 'в тг' in message_lower:
+                extracted['notification_type'] = 'telegram'
+            token_match = re.search(r'токен\s*(?:бота)?\s*[:\s]*([0-9]+:[A-Za-z0-9_-]+)', message, re.IGNORECASE)
+            if not token_match:
+                token_match = re.search(r'(\d{8,12}:[A-Za-z0-9_-]{30,})', message)
+            if token_match:
+                extracted['notification_telegram_token'] = token_match.group(1).strip()
+            chat_match = re.search(r'чат\s*(?:айди|id|айди)?\s*[:\s]*(-?\d+)', message, re.IGNORECASE)
+            if not chat_match:
+                chat_match = re.search(r'chat\s*id\s*[:\s]*(-?\d+)', message, re.IGNORECASE)
+            if not chat_match:
+                chat_match = re.search(r'(-?\d{10,})', message)
+            if chat_match:
+                extracted['notification_telegram_chat_id'] = chat_match.group(1).strip()
         return extracted
     
     async def _llm_extract_data(self, message: str, stage: str) -> Dict[str, Any]:
@@ -405,17 +445,23 @@ class LandingAIAgent:
                 })
             logger.info(f"General info after update: {list(self.collected_data['general_info'].keys())}")
         elif self.stage == 'products':
-            # Поля подвала и уведомлений из мини-опроса могли прийти вместе с ценами — кладём в general_info
+            # Нормализация ключей от LLM: подставляем стандартные имена для токена и chat id
+            normalized = dict(extracted_data)
+            if not normalized.get('notification_telegram_token') and (normalized.get('bot_token') or normalized.get('telegram_token')):
+                normalized['notification_telegram_token'] = (normalized.get('bot_token') or normalized.get('telegram_token') or '').strip()
+            if not normalized.get('notification_telegram_chat_id') and normalized.get('chat_id') is not None:
+                normalized['notification_telegram_chat_id'] = str(normalized['chat_id']).strip()
+            # Поля подвала и уведомлений из мини-опроса — в general_info
             footer_keys = {'notification_type', 'notification_email', 'notification_telegram_token', 'notification_telegram_chat_id',
                            'type', 'fio', 'company_name', 'unp', 'address', 'phone', 'email', 'schedule',
                            'photo_description_count', 'photo_gallery_count', 'photo_reviews_count', 'want_video'}
-            general_from_extract = {k: v for k, v in extracted_data.items() if k in footer_keys}
+            general_from_extract = {k: v for k, v in normalized.items() if k in footer_keys and v not in (None, '')}
             if general_from_extract:
                 self.collected_data['general_info'].update(general_from_extract)
             if self.mode == 'SINGLE':
                 if not self.collected_data['products']:
                     self.collected_data['products'].append({})
-                product_extract = {k: v for k, v in extracted_data.items() if k not in footer_keys}
+                product_extract = {k: v for k, v in normalized.items() if k not in footer_keys}
                 self.collected_data['products'][0].update(product_extract)
             else:
                 # Для нескольких товаров
